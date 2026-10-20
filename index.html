@@ -331,6 +331,10 @@ function spawnGearaDoga(){
   });
 }
 
+// 裘尼砲口（相對於精靈中心，已依 260px 顯示寬換算）
+const GY_GUN = { x: -129, y: 7 };
+const GY_SHIELD = [ {x:1,y:30}, {x:-15,y:35}, {x:14,y:54}, {x:-3,y:60} ];
+
 function spawnBoss1(){
   boss = {
     type:'jagd', phase: 1, x: W + 200, y: H*0.5, r: 70,
@@ -1210,6 +1214,41 @@ function updateBoss1(dt){
     if (Math.abs(boss.x - 1620) < 6){ boss.x = 1620; boss.entering = false; }
   } else if (!boss.dead){
     boss.y = H*0.5 + Math.sin(boss.t*(2.2 + boss.phase*0.5)) * 260;
+
+    // 待發射的粒子砲（逐發射出）
+    if (boss.pending && boss.pending.length){
+      for (let i=boss.pending.length-1;i>=0;i--){
+        const q = boss.pending[i];
+        q.t -= dt;
+        if (q.t <= 0){
+          const sx = boss.x + q.px, sy = boss.y + q.py;
+          const ang = Math.atan2(player.y - sy, player.x - sx);
+          for (let k=0;k<3;k++){
+            const a = ang + (k-1)*0.12;
+            enemyBullets.push({
+              x: sx, y: sy,
+              vx: Math.cos(a)*CFG.enemyBulletSpeed*1.15,
+              vy: Math.sin(a)*CFG.enemyBulletSpeed*1.15,
+              r: 13, color: '#ffd0ff', beam: true
+            });
+          }
+          spawnExplosion(sx, sy, '#ff9fe8', 5);
+          sfx('finshot');
+          boss.pending.splice(i,1);
+        }
+      }
+    }
+
+    // 盾牌粒子砲（第 2 階段解鎖）
+    if (boss.phase >= 2){
+      if (boss.cannonCd === undefined) boss.cannonCd = 3.2;
+      boss.cannonCd -= dt;
+      if (boss.cannonCd <= 0){
+        boss.cannonCd = boss.phase === 2 ? 4.2 : 3.2;
+        boss.pending = GY_SHIELD.map((pt, i) => ({ t: i*0.11, px: pt.x, py: pt.y }));
+      }
+    }
+
     boss.fireTimer -= dt;
     if (boss.fireTimer <= 0){
       const p = boss.phase;
@@ -1218,10 +1257,11 @@ function updateBoss1(dt){
       for (let i=0;i<n;i++){
         setTimeout(()=>{
           if (state !== STATE.BOSS1 || !boss || boss.dead) return;
-          enemyShootAt(boss.x - 50, boss.y, player.x, player.y, spd);
+          enemyShootAt(boss.x + GY_GUN.x, boss.y + GY_GUN.y, player.x, player.y, spd);
         }, i*130);
       }
       if (p === 3) fanShot(boss.x - 40, boss.y, 5, Math.PI*0.45, spd*0.85);
+
       boss.fireTimer = p === 1 ? 1.6 : (p === 2 ? 1.3 : 1.05);
     }
   } else {
@@ -2973,6 +3013,7 @@ if (location.hash.startsWith('#phase=')){
   const ph = location.hash.split('=')[1];
   if (ph === 'boss1'){ state = STATE.BOSS1; spawnBoss1(); boss.entering=false; boss.x=1540; }
   if (ph === 'boss2'){ state = STATE.BOSS2; spawnBoss2(); boss.entering=false; boss.x=1540; }
+  if (ph === 'boss1p2'){ state = STATE.BOSS1; spawnBoss1(); boss.entering=false; boss.x=1620; boss.phase=2; boss.hp=50; }
   if (ph === 'boss3'){ state = STATE.BOSS3; spawnBoss3(); boss.entering=false; boss.x=1500; }
   if (ph === 'mash'){ state = STATE.MASH; axisX = axisTargetX; mashTimer = 8; mashCount = 22; }
   if (ph === 'win'){ state = STATE.WIN; axisX = axisTargetX; stateTime = 2; }
