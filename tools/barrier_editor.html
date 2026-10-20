@@ -20,7 +20,7 @@ canvas{cursor:default}
     <b>感應炮</b>：點選後拖曳移動<br>
     　· 黃色把手拖曳 = 旋轉<br>
     　· 滾輪 = 縮放<br>
-    <b>三角邊界</b>：拖曳 3 個紅點<br>
+    <b>三角邊界</b>：拖曳 3 個紅點（赤道）<br><b>上下極點</b>：拖曳 2 個藍點<br>
     <b>空白處點擊</b> = 取消選取
   </div>
   <div class="row"><span>選取</span><b id="sel">無</b></div>
@@ -36,17 +36,22 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const CX = 450, CY = 350;
 
 // 預設：三頂點 + 兩內圈
+// 正三角體（三角雙錐）5 個頂點：3 個赤道 + 上下 2 個極點
 let tri = [
-  {x: CX, y: CY-175},
-  {x: CX+165, y: CY+110},
-  {x: CX-165, y: CY+110}
+  {x: CX,     y: CY-120},   // 赤道 V1（上）
+  {x: CX+150, y: CY+95},    // 赤道 V2（右下）
+  {x: CX-150, y: CY+95}     // 赤道 V3（左下）
+];
+let poles = [
+  {x: CX, y: CY-235},       // 上極點
+  {x: CX, y: CY+205}        // 下極點
 ];
 let fins = [
-  {x: CX,       y: CY-175, ang: -Math.PI/2, sc: 0.95},
-  {x: CX+165,   y: CY+110, ang:  Math.PI/6,  sc: 0.95},
-  {x: CX-165,   y: CY+110, ang:  Math.PI*5/6, sc: 0.95},
-  {x: CX+60,    y: CY+30,  ang:  Math.PI/6 + Math.PI, sc: 0.6},
-  {x: CX-60,    y: CY+30,  ang:  Math.PI*5/6 + Math.PI, sc: 0.6}
+  {x: CX,     y: CY-120, ang: -Math.PI/2,        sc: 0.85},
+  {x: CX+150, y: CY+95,  ang:  Math.PI/6,        sc: 0.85},
+  {x: CX-150, y: CY+95,  ang:  Math.PI*5/6,      sc: 0.85},
+  {x: CX,     y: CY-235, ang: -Math.PI/2,        sc: 0.62},
+  {x: CX,     y: CY+205, ang:  Math.PI/2,        sc: 0.62}
 ];
 
 let sel = -1, drag = null;  // {type:'fin'|'tri', i, mode:'move'|'rot'}
@@ -101,6 +106,21 @@ function draw(){
     }
   });
 
+  // 上下極點
+  poles.forEach((p, i) => {
+    ctx.fillStyle = '#4fb8ff';
+    ctx.beginPath(); ctx.arc(p.x,p.y,9,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(p.x,p.y,9,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle = '#4fb8ff'; ctx.font = 'bold 12px system-ui';
+    ctx.fillText(i===0?'P1 上':'P2 下', p.x+12, p.y-10);
+    // 連到赤道三點（立體感）
+    tri.forEach(q => {
+      ctx.strokeStyle = 'rgba(120,200,255,0.18)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke();
+    });
+  });
+
   // 三角頂點
   tri.forEach((p, i) => {
     ctx.fillStyle = '#ff6b6b';
@@ -131,6 +151,9 @@ cv.addEventListener('mousedown', e => {
   for (let i=0;i<3;i++){
     if (Math.hypot(tri[i].x-p.x, tri[i].y-p.y) < 16){ drag={type:'tri', i}; return; }
   }
+  for (let i=0;i<poles.length;i++){
+    if (Math.hypot(poles[i].x-p.x, poles[i].y-p.y) < 16){ drag={type:'pole', i}; return; }
+  }
   // 旋轉把手
   for (let i=0;i<fins.length;i++){
     const f = fins[i];
@@ -148,6 +171,7 @@ window.addEventListener('mousemove', e => {
   if (!drag) return;
   const p = pos(e);
   if (drag.type === 'tri'){ tri[drag.i].x = p.x; tri[drag.i].y = p.y; }
+  else if (drag.type === 'pole'){ poles[drag.i].x = p.x; poles[drag.i].y = p.y; }
   else {
     const f = fins[drag.i];
     if (drag.mode === 'move'){ f.x = p.x; f.y = p.y; }
@@ -166,6 +190,7 @@ document.getElementById('btnReset').onclick = () => location.reload();
 document.getElementById('btnCopy').onclick = () => {
   const data = {
     tri: tri.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
+    poles: poles.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
     fins: fins.map(f => ({x: Math.round(f.x-CX), y: Math.round(f.y-CY), ang: +(f.ang).toFixed(3), sc: +f.sc.toFixed(2)}))
   };
   const ta = document.getElementById('out');
