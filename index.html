@@ -69,10 +69,19 @@ function initAudio(){
   if (actx) return;
   try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){}
   // 預先解碼火箭炮音效
-  const load = (src, set) => fetch(src).then(r => r.arrayBuffer())
-    .then(ab => actx.decodeAudioData(ab)).then(b => set(b)).catch(() => {});
-  if (actx && !bazBuf)   load(BAZ_SRC,   b => { bazBuf = b; });
-  if (actx && !rifleBuf) load(RIFLE_SRC, b => { rifleBuf = b; });
+  const load = (src, set, vol) => fetch(src).then(r => r.arrayBuffer())
+    .then(ab => actx.decodeAudioData(ab))
+    .then(b => {
+      if (vol !== 1){
+        for (let c=0;c<b.numberOfChannels;c++){
+          const d = b.getChannelData(c);
+          for (let i=0;i<d.length;i++) d[i] *= vol;
+        }
+      }
+      set(b);
+    }).catch(() => {});
+  if (actx && !bazBuf)   load(BAZ_SRC,   b => { bazBuf = b; }, 0.90);
+  if (actx && !rifleBuf) load(RIFLE_SRC, b => { rifleBuf = b; }, 0.13);
 }
 function sfx(kind){
   if (!actx || muted) return;
@@ -82,7 +91,7 @@ function sfx(kind){
   if (kind === 'shot'){
     if (rifleBuf){
       const rs = actx.createBufferSource(), rg = actx.createGain();
-      rg.gain.value = 0.10;
+      rg.gain.value = 1.0;
       rs.buffer = rifleBuf;
       rs.connect(rg); rg.connect(actx.destination);
       rs.start(t, 0, Math.min(1.25, rifleBuf.duration));
@@ -90,14 +99,14 @@ function sfx(kind){
     }
     o.type = 'square'; o.frequency.setValueAtTime(880, t);
     o.frequency.exponentialRampToValueAtTime(220, t + 0.08);
-    g.gain.setValueAtTime(0.05, t);
+    g.gain.setValueAtTime(0.02, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
     o.start(t); o.stop(t + 0.1);
   } else if (kind === 'bazooka'){
     if (bazBuf){
       const src = actx.createBufferSource();
       const g2 = actx.createGain();
-      g2.gain.value = 0.9;
+      g2.gain.value = 1.0;
       src.buffer = bazBuf;
       src.connect(g2); g2.connect(actx.destination);
       // 音檔長 5 秒，只取前 1.4 秒的爆發段
