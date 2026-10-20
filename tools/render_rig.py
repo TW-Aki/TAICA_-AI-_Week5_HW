@@ -9,7 +9,10 @@ def render(spec, out, bg=None, scale=1.0):
     for item in spec["placements"]:
         idx, x, y, sc, flip = item[:5]
         rot = item[5] if len(item) > 5 else 0
-        im = Image.open(f"assets/parts_raw/part_{idx:02d}.png").convert("RGBA")
+        if idx >= 100:
+            im = Image.open(f"assets/parts_new/n_{idx-100:02d}.png").convert("RGBA")
+        else:
+            im = Image.open(f"assets/parts_raw/part_{idx:02d}.png").convert("RGBA")
         if flip: im = im.transpose(Image.FLIP_LEFT_RIGHT)
         w, h = max(1,int(im.width*sc*scale)), max(1,int(im.height*sc*scale))
         im = im.resize((w,h), Image.LANCZOS)
