@@ -538,6 +538,8 @@ function pickBeamY(){
 }
 
 function startMegaBeam(){
+  // 線控砲與メガ粒子砲是同一組武裝，發射前先收回
+  wirePods.forEach(w => { w.state = 'back'; });
   boss.beamShots = 3;
   boss.beamState = { mode: 'warn', timer: 1.4, y: pickBeamY(), h: H / 3 };
   boss.arms = true;
@@ -1391,7 +1393,7 @@ function updateBoss2(dt){
     if (boss.wireCd === undefined) boss.wireCd = 8;
     if (!wirePods.length){
       boss.wireCd -= dt;
-      if (boss.wireCd <= 0 && boss.phase >= 2){
+      if (boss.wireCd <= 0 && boss.phase >= 2 && !boss.beamState && boss.beamCd > 2.5){
         boss.wireCd = boss.phase === 2 ? 11 : 8.5;
         startWireAttack();
       }
@@ -2036,21 +2038,34 @@ function drawAtkFins(){
 function drawMegaArms(){
   for (const a of megaArms){
     // 纜線
+    const mnt = AL_WIRE_MOUNT[a.side < 0 ? 0 : 1];
+    const ox = boss ? boss.x + mnt.x : a.x, oy = boss ? boss.y + mnt.y : a.y;
     ctx.strokeStyle = 'rgba(190,170,210,0.55)';
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(boss ? boss.x : a.x, boss ? boss.y : a.y);
-    ctx.quadraticCurveTo((a.x + (boss ? boss.x : a.x))/2, a.y - 80, a.x, a.y);
+    ctx.moveTo(ox, oy);
+    ctx.quadraticCurveTo((a.x + ox)/2, a.y - 80, a.x, a.y);
     ctx.stroke();
 
-    // 本體
-    ctx.fillStyle = 'rgba(255,122,217,0.30)';
-    ctx.beginPath(); ctx.arc(a.x, a.y, 26, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffb8ea';
-    ctx.beginPath();
-    ctx.moveTo(0+a.x, -14+a.y); ctx.lineTo(12+a.x, 0+a.y);
-    ctx.lineTo(0+a.x, 14+a.y); ctx.lineTo(-12+a.x, 0+a.y);
-    ctx.closePath(); ctx.fill();
+    // 本體：a15 六管莢艙
+    ctx.fillStyle = 'rgba(255,122,217,0.25)';
+    ctx.beginPath(); ctx.arc(a.x, a.y, 24, 0, Math.PI*2); ctx.fill();
+    const wi = IMG.wirePod2;
+    if (wi && wi.complete && wi.naturalWidth){
+      const wh = 48, ww = wh * wi.naturalWidth / wi.naturalHeight;
+      ctx.save();
+      ctx.translate(a.x, a.y);
+      const aimAng = (a.mode === 'fire') ? Math.atan2(a.by2 - a.by1, a.bx2 - a.bx1) : Math.atan2(player.y - a.y, player.x - a.x);
+      ctx.rotate(aimAng + Math.PI);
+      ctx.drawImage(wi, -ww/2, -wh/2, ww, wh);
+      ctx.restore();
+    } else {
+      ctx.fillStyle = '#ffb8ea';
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y-14); ctx.lineTo(a.x+12, a.y);
+      ctx.lineTo(a.x, a.y+14); ctx.lineTo(a.x-12, a.y);
+      ctx.closePath(); ctx.fill();
+    }
 
     // 光柱（1.5 秒）：從砲口射出的斜向光束
     if (a.mode === 'fire'){
@@ -3202,6 +3217,7 @@ if (location.hash.startsWith('#phase=')){
   if (ph === 'boss1'){ state = STATE.BOSS1; spawnBoss1(); boss.entering=false; boss.x=1540; }
   if (ph === 'boss2'){ state = STATE.BOSS2; spawnBoss2(); boss.entering=false; boss.x=1540; }
   if (ph === 'boss1p2'){ state = STATE.BOSS1; spawnBoss1(); boss.entering=false; boss.x=1620; boss.phase=2; boss.hp=50; deployFunnels(6); }
+  if (ph === 'boss2b'){ state = STATE.BOSS2; spawnBoss2(); boss.entering=false; boss.x=1500; boss.phase=2; boss.hp=50; startMegaBeam(); }
   if (ph === 'boss2w'){ state = STATE.BOSS2; spawnBoss2(); boss.entering=false; boss.x=1500; boss.phase=2; boss.hp=50; startWireAttack(); }
   if (ph === 'boss3'){ state = STATE.BOSS3; spawnBoss3(); boss.entering=false; boss.x=1500; }
   if (ph === 'mash'){ state = STATE.MASH; axisX = axisTargetX; mashTimer = 8; mashCount = 22; }
