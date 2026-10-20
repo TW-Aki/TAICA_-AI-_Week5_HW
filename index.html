@@ -9,17 +9,17 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;}
   canvas{display:block;cursor:crosshair;}
   /* 手機／平板操作按鈕 */
-  #touchUI{position:fixed;right:18px;bottom:18px;display:none;flex-direction:column;gap:12px;z-index:10}
+  #touchUI{position:fixed;right:18px;bottom:18px;display:none;flex-direction:column;gap:8px;z-index:10}
   #touchUI.on{display:flex}
   #touchUI button{
-    width:96px;height:96px;border-radius:50%;border:2px solid rgba(120,200,255,0.55);
-    background:rgba(18,32,48,0.72);color:#cfe9ff;font-size:15px;font-weight:700;
+    width:74px;height:74px;border-radius:50%;border:2px solid rgba(120,200,255,0.55);
+    background:rgba(18,32,48,0.72);color:#cfe9ff;font-size:13px;font-weight:700;
     font-family:inherit;letter-spacing:1px;backdrop-filter:blur(6px);
     display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
     -webkit-tap-highlight-color:transparent;user-select:none;touch-action:manipulation;
   }
   #touchUI button:active{background:rgba(60,130,190,0.85);transform:scale(0.96)}
-  #touchUI button .sub{font-size:11px;font-weight:400;opacity:0.75}
+  #touchUI button .sub{font-size:9px;font-weight:400;opacity:0.7}
   #touchUI button:disabled{opacity:0.3}
   #rotateHint{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
     background:rgba(5,8,15,0.92);color:#9fd0f0;font-size:18px;letter-spacing:2px;z-index:20;
@@ -34,6 +34,7 @@
 <div id="rotateHint"><div class="ico">▭</div>請將裝置轉為橫向<br><span style="font-size:13px;opacity:0.6">橫向才能完整顯示戰場</span></div>
 <div id="touchUI">
   <button id="btnSkill">感應炮<span class="sub">技能</span></button>
+  <button id="btnBarrier">光束盾<span class="sub">技能</span></button>
   <button id="btnWeapon">步槍<span class="sub">切換</span></button>
 </div>
 <script>
@@ -233,6 +234,7 @@ cvs.addEventListener('contextmenu', e => e.preventDefault());
 const touchUI = document.getElementById('touchUI');
 const btnWeapon = document.getElementById('btnWeapon');
 const btnSkill = document.getElementById('btnSkill');
+const btnBarrier = document.getElementById('btnBarrier');
 const isTouch = matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window;
 if (isTouch) touchUI.classList.add('on');
 
@@ -255,6 +257,8 @@ function refreshTouchUI(){
   btnWeapon.disabled = playerLevel < 1;
   btnSkill.disabled = playerLevel < 3;
   btnSkill.innerHTML = (playerLevel < 3 ? 'LV3' : '感應炮') + '<span class="sub">技能</span>';
+  btnBarrier.disabled = playerLevel < 2;
+  btnBarrier.innerHTML = (playerLevel < 2 ? 'LV2' : '光束盾') + '<span class="sub">技能</span>';
 }
 btnWeapon.addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation();
@@ -266,6 +270,11 @@ btnSkill.addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation();
   initAudio();
   keys['KeyE_pressed'] = true;
+});
+btnBarrier.addEventListener('pointerdown', e => {
+  e.preventDefault(); e.stopPropagation();
+  initAudio();
+  keys['Shift_pressed'] = true;
 });
 setInterval(refreshTouchUI, 400);
 
