@@ -62,3 +62,17 @@ screenshots/    畫面截圖
 ## 素材授權
 
 機體圖像來自 **SD Gundam G Generation** 系列（Bandai Namco），經 [The Spriters Resource](https://www.spriters-resource.com/) 取得，僅供本作業的同人研究用途，未用於營利。原作權利屬 Bandai Namco / 創通・サンライズ所有。
+
+
+## 部署（GitHub Pages）
+
+發布來源設定為 **main 分支 / docs 資料夾**。
+
+`docs/index.html` 是 `index.html` 的複本（遊戲本身已把圖片與音效全部內嵌，單檔即可運行）。
+
+修改遊戲後執行：
+
+```bash
+./sync_docs.sh   # 把 index.html 複製到 docs/
+git add -A && git commit -m "deploy" && git push
+```
