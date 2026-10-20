@@ -2260,25 +2260,25 @@ function drawBoss(){
         const flick = 0.9 + Math.sin(boss.t*23 + i*1.9)*0.12;
         const L = Math.hypot(j.dx, j.dy) * puls * flick;
         const a = Math.atan2(j.dy, j.dx);
-        const ex = j.x + Math.cos(a)*L, ey = j.y + Math.sin(a)*L;
-        const px = -Math.sin(a), py = Math.cos(a);
-        const wid = 4 + L*0.09;
-        const g = ctx.createLinearGradient(j.x, j.y, ex, ey);
-        g.addColorStop(0, 'rgba(255,240,200,0.55)');
-        g.addColorStop(0.45, 'rgba(255,175,80,0.30)');
-        g.addColorStop(1, 'rgba(255,110,40,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.moveTo(j.x + px*wid, j.y + py*wid);
-        ctx.quadraticCurveTo(j.x + j.dx*0.6 + px*2, j.y + j.dy*0.6 + py*2, ex, ey);
-        ctx.quadraticCurveTo(j.x + j.dx*0.6 - px*2, j.y + j.dy*0.6 - py*2, j.x - px*wid, j.y - py*wid);
-        ctx.closePath(); ctx.fill();
+        const rad = 3.5 + L*0.09;
+        for (let k=0;k<4;k++){
+          const t = k/3;
+          const cx2 = j.x + Math.cos(a)*L*t;
+          const cy2 = j.y + Math.sin(a)*L*t;
+          const r = rad * (1 - t*0.72);
+          const g = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, r);
+          const al = 0.5 * (1 - t*0.55);
+          g.addColorStop(0, `rgba(255,${245 - t*70},${200 - t*130},${al})`);
+          g.addColorStop(1, 'rgba(255,110,40,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(cx2, cy2, r, 0, Math.PI*2); ctx.fill();
+        }
         // 噴口亮點
-        const cg2 = ctx.createRadialGradient(j.x, j.y, 0, j.x, j.y, wid*1.3);
-        cg2.addColorStop(0, 'rgba(255,255,235,0.95)');
-        cg2.addColorStop(1, 'rgba(255,190,90,0)');
+        const cg2 = ctx.createRadialGradient(j.x, j.y, 0, j.x, j.y, rad*1.2);
+        cg2.addColorStop(0, 'rgba(255,255,240,0.95)');
+        cg2.addColorStop(1, 'rgba(255,200,110,0)');
         ctx.fillStyle = cg2;
-        ctx.beginPath(); ctx.arc(j.x, j.y, wid*1.3, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(j.x, j.y, rad*1.2, 0, Math.PI*2); ctx.fill();
       });
     }
 
