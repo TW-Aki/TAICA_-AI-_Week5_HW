@@ -2947,7 +2947,7 @@ function drawHUD(){
     active: barrierMode === 'tri',
     ready: barReady,
     cdRatio: playerLevel >= 2 ? Math.max(0, Math.min(1, Math.max(domeCd / CFG.domeCd, skillLock / CFG.skillRecharge))) : 1,
-    cdText: Math.ceil(Math.max(domeCd, skillLock)),
+    cdText: Math.ceil(skillLock > 0 ? skillLock : Math.max(0, domeCd)),
     keyLabel: playerLevel >= 2 ? 'SHIFT / 右鍵' : 'LV2 解鎖',
     name: '光束屏障',
     glyph: glyphFins
@@ -2959,7 +2959,7 @@ function drawHUD(){
     active: barrierMode === 'atk',
     ready: atkReady,
     cdRatio: playerLevel >= 3 ? Math.max(0, Math.min(1, Math.max(finsCd / CFG.finsCd, skillLock / CFG.skillRecharge))) : 1,
-    cdText: Math.ceil(Math.max(finsCd, skillLock)),
+    cdText: Math.ceil(skillLock > 0 ? skillLock : Math.max(0, finsCd)),
     keyLabel: playerLevel >= 3 ? 'E' : 'LV3 解鎖',
     name: '翼狀感應炮',
     glyph: glyphDrones
