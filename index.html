@@ -113,6 +113,13 @@ function sfx(kind){
     g.gain.setValueAtTime(0.06, now);
     g.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
     o.start(now); o.stop(now + 0.04);
+  } else if (kind === 'finshot'){
+    o.type = 'sine';
+    o.frequency.setValueAtTime(1400, t);
+    o.frequency.exponentialRampToValueAtTime(520, t + 0.1);
+    g.gain.setValueAtTime(0.05, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.start(t); o.stop(t + 0.13);
   } else if (kind === 'hit'){
     o.type = 'triangle'; o.frequency.setValueAtTime(160, t);
     g.gain.setValueAtTime(0.08, t);
@@ -382,7 +389,7 @@ function updateFunnels(dt){
       f.timer -= dt;
       if (f.timer <= 0){
         enemyShootAt(f.x, f.y, player.x, player.y, CFG.enemyBulletSpeed*0.95, f.color, true);
-        sfx('shot');
+        sfx('finshot');
         f.wave++;
         if (f.wave >= 2){
           f.mode = 'return';
@@ -698,7 +705,7 @@ function updateAtkFins(dt){
         const my = f.y + Math.sin(rot)*hlx + Math.cos(rot)*hly;
         bullets.push({ x:mx, y:my, vx:ax/ad*bs, vy:ay/ad*bs, r:10, dmg:2, color:'#ff9fe8', homing:true, target:f.target });
         spawnExplosion(mx, my, '#ff9fe8', 4);
-        sfx('shot');
+        sfx('finshot');
         // 射完換位置
         if (f.volley > 0) atkFinNewOffset(f);
       }
