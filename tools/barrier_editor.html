@@ -28,7 +28,7 @@ canvas{cursor:default}
   <div class="row"><span>縮放</span><b id="scl">-</b></div>
   <div class="row"><span>鏡像</span><b id="flp">-</b></div>
   <div class="locked">🔒 位置／旋轉／縮放已鎖定<br>只能調整圖層順序</div>
-  <div style="margin-top:14px;color:#c8a8d8;font-size:12px">圖層順序（上＝最上層）</div>
+  <div style="margin-top:14px;color:#c8a8d8;font-size:12px">圖層（點擊切換 前／後）</div>
   <div id="orderList" style="margin-top:6px"></div>
   <button id="btnFlip">鏡像（左右翻轉）</button>
   <button id="btnReset">重設為預設</button>
@@ -60,32 +60,42 @@ let fins = [
   {x: CX,     y: CY-235, ang: -Math.PI/2,   sc: 0.62, kind:'wide'}
 ];
 
-let order = ['face','mech','edge','fins'];   // 由下到上
-const LABELS = { face:'錐面（粉色）', edge:'邊線', mech:'機體', fins:'感應炮' };
+let faceFront = [false,false,false,false,false];
+let edgeFront = [true,true,true,true,true,true,true,true];
+let finFront  = [false,false,false,false,false];
 
-function renderOrder(){
+function renderLayers(){
   const box = document.getElementById('orderList');
   if (!box) return;
-  const top = [...order].reverse();
+  const rows = [];
+  const FACE = ['底面','側面 1','側面 2','側面 3','側面 4'];
+  const EDGE = ['底邊 1','底邊 2','底邊 3','底邊 4','側稜 1','側稜 2','側稜 3','側稜 4'];
+  FACE.forEach((n,i)=>rows.push({g:'face', i, n, v:faceFront[i]}));
+  EDGE.forEach((n,i)=>rows.push({g:'edge', i, n, v:edgeFront[i]}));
+  for (let i=0;i<5;i++) rows.push({g:'fin', i, n:'感應炮 '+(i+1), v:finFront[i]});
+
   let html = '';
-  top.forEach((el, idx) => {
-    const real = order.length - 1 - idx;   // 在 order 中的索引
-    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
-         +  '<div style="flex:1;font-size:12px;color:#ffb8ea">' + (LABELS[el]||el) + '</div>'
-         +  '<button data-act="up" data-i="' + real + '" style="width:30px;height:26px;padding:0;margin:0;font-size:11px">▲</button>'
-         +  '<button data-act="dn" data-i="' + real + '" style="width:30px;height:26px;padding:0;margin:0;font-size:11px">▼</button>'
+  let last = '';
+  rows.forEach(r => {
+    if (r.g !== last){
+      const t = r.g==='face'?'錐面':(r.g==='edge'?'邊線':'感應炮');
+      html += '<div style="margin:10px 0 4px;font-size:11px;color:#8a6a96;letter-spacing:1px">'+t+'</div>';
+      last = r.g;
+    }
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
+         +  '<div style="flex:1;font-size:12px;color:#e0c8ea">'+r.n+'</div>'
+         +  '<button data-g="'+r.g+'" data-i="'+r.i+'" style="width:52px;height:24px;padding:0;margin:0;font-size:11px;'
+         +  (r.v ? 'background:#7a2a5e;border-color:#ff7ad9;color:#fff' : '') + '">'+(r.v?'前':'後')+'</button>'
          +  '</div>';
   });
   box.innerHTML = html;
   box.querySelectorAll('button').forEach(b => {
     b.onclick = () => {
-      const i = parseInt(b.dataset.i, 10);
-      if (b.dataset.act === 'up' && i < order.length-1){
-        [order[i], order[i+1]] = [order[i+1], order[i]];
-      } else if (b.dataset.act === 'dn' && i > 0){
-        [order[i], order[i-1]] = [order[i-1], order[i]];
-      }
-      renderOrder();
+      const i = parseInt(b.dataset.i,10), g = b.dataset.g;
+      if (g==='face') faceFront[i] = !faceFront[i];
+      else if (g==='edge') edgeFront[i] = !edgeFront[i];
+      else finFront[i] = !finFront[i];
+      renderLayers();
     };
   });
 }
@@ -249,15 +259,15 @@ document.getElementById('btnFlip').onclick = () => {
 document.getElementById('btnReset').onclick = () => location.reload();
 document.getElementById('btnCopy').onclick = () => {
   const data = {
-    order: order,
+    faceFront, edgeFront,
     tri: tri.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
     poles: poles.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
-    fins: fins.map(f => ({x: Math.round(f.x-CX), y: Math.round(f.y-CY), ang: +(f.ang).toFixed(3), sc: +f.sc.toFixed(2), kind: f.kind, flip: !!f.flip}))
+    fins: fins.map(f => ({x: Math.round(f.x-CX), y: Math.round(f.y-CY), ang: +(f.ang).toFixed(3), sc: +f.sc.toFixed(2), kind: f.kind, flip: !!f.flip, front: finFront[fins.indexOf(f)]}))
   };
   const ta = document.getElementById('out');
   ta.value = JSON.stringify(data);
   ta.select(); try{ document.execCommand('copy'); }catch(err){}
 };
-renderOrder();
+renderLayers();
 draw();
 </script></body></html>

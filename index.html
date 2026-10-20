@@ -432,7 +432,9 @@ const GY_GUN = { x: -129, y: 7 };
 // α・阿吉爾 線控砲莢艙的安裝位置（相對精靈中心，顯示寬 380）
 // 光束護盾佈局（由 barrier_editor 匯出）
 const AL_BARRIER = {
-  order: ['face','mech','edge','fins'],   // 由下到上
+  faceFront: [false,false,false,false,false],   // 底面 + 四個側面
+  edgeFront: [true,true,true,true, true,true,true,true],  // 底四邊 + 側稜四條
+  // 感應炮的 front 存在 fins[i].front
   tri: [{x:-10,y:-34},{x:112,y:10},{x:-10,y:73},{x:-132,y:10}],
   poles: [{x:-10,y:-149}],
   fins: [
@@ -2011,6 +2013,7 @@ function activateBarrier(){
   barrierActive = 3.4;
   barrierFins = AL_BARRIER.fins.map(f => ({
     ox: f.x, oy: f.y, ang: f.ang, sc: f.sc, kind: f.kind, flip: !!f.flip,
+    front: !!f.front,
     x: player.x + f.x, y: player.y + f.y, layer: 0
   }));
   barrierTri = AL_BARRIER.tri.map(p => ({ ox: p.x, oy: p.y, x: player.x + p.x, y: player.y + p.y }));
@@ -2023,85 +2026,72 @@ function barrierGeom(){
   return { tri: barrierTri, apex: barrierApex, pulse: 0.8 + Math.sin(gameTime*7)*0.2 };
 }
 
-function drawBarrierFace(){
+function drawBarrierFaceIdx(i){
   const G = barrierGeom(); if (!G) return;
   const { tri, apex, pulse } = G;
   ctx.save();
-  // 四個三角側面（50% 透明粉）
-  if (apex){
-    for (let k=0;k<tri.length;k++){
-      const a = tri[k], b = tri[(k+1)%tri.length];
-      ctx.beginPath();
-      ctx.moveTo(apex.x, apex.y);
-      ctx.lineTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.closePath();
-      ctx.fillStyle = `rgba(255,120,200,${0.35*pulse})`;
-      ctx.fill();
-    }
+  if (i === 0){
+    ctx.beginPath();
+    ctx.moveTo(tri[0].x, tri[0].y);
+    for (let k=1;k<tri.length;k++) ctx.lineTo(tri[k].x, tri[k].y);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(255,120,200,${0.22*pulse})`;
+    ctx.fill();
+  } else if (apex){
+    const a = tri[i-1], b = tri[i % tri.length];
+    ctx.beginPath();
+    ctx.moveTo(apex.x, apex.y); ctx.lineTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    ctx.closePath();
+    ctx.fillStyle = `rgba(255,120,200,${0.35*pulse})`;
+    ctx.fill();
   }
-  // 底面
-  ctx.beginPath();
-  ctx.moveTo(tri[0].x, tri[0].y);
-  for (let i=1;i<tri.length;i++) ctx.lineTo(tri[i].x, tri[i].y);
-  ctx.closePath();
-  ctx.fillStyle = `rgba(255,120,200,${0.22*pulse})`;
-  ctx.fill();
   ctx.restore();
 }
 
-function drawBarrierEdge(){
+function drawBarrierEdgeIdx(i){
   const G = barrierGeom(); if (!G) return;
-  const { tri, apex, pulse } = G;
+  const { tri, apex } = G;
+  let ax, ay, bx, by;
+  if (i < tri.length){
+    ax = tri[i].x; ay = tri[i].y;
+    const n = tri[(i+1)%tri.length]; bx = n.x; by = n.y;
+  } else {
+    if (!apex) return;
+    const p = tri[i - tri.length];
+    ax = apex.x; ay = apex.y; bx = p.x; by = p.y;
+  }
   ctx.save();
-  const line = (ax, ay, bx, by) => {
-    ctx.strokeStyle = `rgba(255,190,235,${0.95})`;
-    ctx.lineWidth = 1.6;
-    ctx.shadowColor = '#ff7ad9';
-    ctx.shadowBlur = 10;
-    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
-    ctx.shadowBlur = 0;
-  };
-  // 底面四邊
-  for (let k=0;k<tri.length;k++){
-    const a = tri[k], b = tri[(k+1)%tri.length];
-    line(a.x, a.y, b.x, b.y);
-  }
-  // 側稜四條
-  if (apex) tri.forEach(p => line(apex.x, apex.y, p.x, p.y));
-
+  ctx.strokeStyle = 'rgba(255,190,235,0.95)';
+  ctx.lineWidth = 1.6;
+  ctx.shadowColor = '#ff7ad9'; ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
   ctx.restore();
 }
 
-function drawBarrierFinsOnly(){
+function drawBarrierFinIdx(i){
   const G = barrierGeom(); if (!G) return;
-  for (const f of barrierFins){
-    const img = (f.kind === 'narrow' ? IMG.nuFinN : IMG.nuFin);
-    if (!img || !img.complete || !img.naturalWidth) continue;
-    ctx.save();
-    ctx.translate(f.x, f.y);
-    ctx.rotate(f.ang + Math.PI/2);
-    if (f.flip) ctx.scale(-1, 1);
-    const fh = 96 * f.sc, fw = fh * img.naturalWidth / img.naturalHeight;
-    ctx.drawImage(img, -fw/2, -fh*0.42, fw, fh);
-    ctx.restore();
-  }
+  const f = barrierFins[i]; if (!f) return;
+  const img = (f.kind === 'narrow' ? IMG.nuFinN : IMG.nuFin);
+  if (!img || !img.complete || !img.naturalWidth) return;
+  ctx.save();
+  ctx.translate(f.x, f.y);
+  ctx.rotate(f.ang + Math.PI/2);
+  if (f.flip) ctx.scale(-1, 1);
+  const fh = 96 * f.sc, fw = fh * img.naturalWidth / img.naturalHeight;
+  ctx.drawImage(img, -fw/2, -fh*0.42, fw, fh);
+  ctx.restore();
 }
 
-function drawBarrierOrdered(afterMech){
-  if (barrierActive <= 0 || barrierMode !== 'tri') return;
-  const order = AL_BARRIER.order || ['face','mech','edge','fins'];
-  const mi = order.indexOf('mech');
-  const part = order.slice(afterMech ? mi+1 : 0, afterMech ? order.length : mi);
-  for (const el of part){
-    if (el === 'face') drawBarrierFace();
-    else if (el === 'edge') drawBarrierEdge();
-    else if (el === 'fins') drawBarrierFinsOnly();
-  }
+function drawBarrierLayer(front){
+  if (barrierActive <= 0 || barrierMode !== 'tri' || !barrierTri.length) return;
+  const L = AL_BARRIER;
+  for (let i=0;i<5;i++){ if (!!L.faceFront[i] === front) drawBarrierFaceIdx(i); }
+  for (let i=0;i<8;i++){ if (!!L.edgeFront[i] === front) drawBarrierEdgeIdx(i); }
+  for (let i=0;i<barrierFins.length;i++){ if (!!barrierFins[i].front === front) drawBarrierFinIdx(i); }
 }
 
-function drawBarrierFins(){ drawBarrierOrdered(false); }
-function drawBarrierFront(){ drawBarrierOrdered(true); }
+function drawBarrierFins(){ drawBarrierLayer(false); }
+function drawBarrierFront(){ drawBarrierLayer(true); }
 
 function drawDuelFx(){
   for (const d of duelFx){
