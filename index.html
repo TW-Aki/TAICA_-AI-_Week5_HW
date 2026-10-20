@@ -726,7 +726,10 @@ function fireBullet(){
   if (attackTimer > 0) return;
   const w = currentWeapon();
   attackTimer = w.cd;
-  const ox = player.x + 56, oy = player.y;
+  // 依武器對齊各自的槍口
+  const isBaz = w.id === 'bazooka';
+  const ox = player.x + (isBaz ? 75 : 56);
+  const oy = player.y + (isBaz ? 38 : 0);
   if (w.count === 3){
     [-0.14, 0, 0.14].forEach(a => {
       bullets.push({ x:ox, y:oy, vx: Math.cos(a)*w.speed, vy: Math.sin(a)*w.speed, r:w.r, dmg:w.dmg, color:w.color });
@@ -1433,7 +1436,8 @@ function drawPlayer(){
       const s2 = isBaz ? 2.1 : 1;
       ctx.save();
       ctx.globalAlpha = fa;
-      ctx.translate(w*0.34, 0);
+      if (usingBaz) ctx.translate(75, 38);   // 火箭炮砲口
+      else ctx.translate(w*0.34, 0);
       ctx.scale(s2, s2);
       if (isBaz){
         const fg2 = ctx.createRadialGradient(0,0,2,0,0,34);
