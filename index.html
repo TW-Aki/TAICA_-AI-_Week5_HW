@@ -2058,10 +2058,10 @@ function drawBoss(){
 
       jets.forEach((j, i) => {
         if (!j.on) return;
-        const base = j.big ? 26 : 13;
-        const span = j.big ? 18 : 22;
+        const base = j.big ? 26 : 19;
+        const span = j.big ? 18 : 26;
         const len = base + Math.min(1.2, j.pw) * span + Math.sin(boss.t*22 + i*1.7)*2.5;
-        const rad = j.big ? 15 : 9;
+        const rad = j.big ? 15 : 13;
         // 由噴口往外疊加柔光圓，形成火焰
         for (let k=0;k<4;k++){
           const t = k/3;
