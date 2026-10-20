@@ -35,6 +35,16 @@ canvas{cursor:default}
     <label>旋轉 <b id="angv">-</b></label>
     <input type="range" id="rngAngle" min="-180" max="180" step="1" value="0">
   </div>
+  <div class="row" style="margin-top:12px"><span>面 圖層</span>
+    <select id="selFace" style="background:#1b2a3c;color:#ffb8ea;border:1px solid #55305a;border-radius:4px;padding:3px">
+      <option value="behind">機體後面</option><option value="front">機體上面</option>
+    </select>
+  </div>
+  <div class="row"><span>邊 圖層</span>
+    <select id="selEdge" style="background:#1b2a3c;color:#ffb8ea;border:1px solid #55305a;border-radius:4px;padding:3px">
+      <option value="behind">機體後面</option><option value="front" selected>機體上面</option>
+    </select>
+  </div>
   <button id="btnFlip">鏡像（左右翻轉）</button>
   <button id="btnReset">重設為預設</button>
   <button id="btnCopy">匯出 JSON</button>
@@ -238,6 +248,7 @@ document.getElementById('btnFlip').onclick = () => {
 document.getElementById('btnReset').onclick = () => location.reload();
 document.getElementById('btnCopy').onclick = () => {
   const data = {
+    layer: { face: document.getElementById('selFace').value, edge: document.getElementById('selEdge').value },
     tri: tri.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
     poles: poles.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
     fins: fins.map(f => ({x: Math.round(f.x-CX), y: Math.round(f.y-CY), ang: +(f.ang).toFixed(3), sc: +f.sc.toFixed(2), kind: f.kind, flip: !!f.flip}))

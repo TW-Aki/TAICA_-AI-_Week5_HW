@@ -432,6 +432,7 @@ const GY_GUN = { x: -129, y: 7 };
 // α・阿吉爾 線控砲莢艙的安裝位置（相對精靈中心，顯示寬 380）
 // 光束護盾佈局（由 barrier_editor 匯出）
 const AL_BARRIER = {
+  layer: { face:'behind', edge:'front' },
   tri: [{x:-10,y:-34},{x:112,y:10},{x:-10,y:73},{x:-132,y:10}],
   poles: [{x:-10,y:-149}],
   fins: [
@@ -716,10 +717,16 @@ function updateBarrierFins(dt){
     const b = enemyBullets[i];
     if (b.beam) continue;
     let hit = false;
-    const of = barrierTri.length ? barrierTri : barrierFins;
-    for (let k=0;k<of.length;k++){
+    const of = barrierTri;
+    for (let k=0;k<of.length && !hit;k++){
       const a = of[k], c = of[(k+1)%of.length];
       if (distToSeg(b.x, b.y, a.x, a.y, c.x, c.y) < b.r + 8){ hit = true; break; }
+    }
+    // 側稜（頂點到四個底角）
+    if (!hit && barrierApex){
+      for (const p of of){
+        if (distToSeg(b.x, b.y, barrierApex.x, barrierApex.y, p.x, p.y) < b.r + 8){ hit = true; break; }
+      }
     }
     if (hit){
       spawnExplosion(b.x, b.y, '#ff7ad9', 6);
@@ -1680,6 +1687,7 @@ function draw(){
   drawBullets();
   drawParticles();
   if (player && player.alive && [STATE.NAV,STATE.WAVE,STATE.BOSS1,STATE.BOSS2,STATE.BOSS3].includes(state)) drawPlayer();
+  drawBarrierFront();
   if (player && player.alive && [STATE.AXIS,STATE.MASH].includes(state)) drawPushing();
 
   drawHUD();
@@ -2010,50 +2018,57 @@ function activateBarrier(){
                   x: player.x + AL_BARRIER.poles[0].x, y: player.y + AL_BARRIER.poles[0].y };
 }
 
-function drawBarrierFins(){
-  if (barrierActive <= 0 || barrierMode !== 'tri' || !barrierTri.length) return;
-  const tri = barrierTri;
-  const cx = player.x, cy = player.y;
-  const pulse = 0.78 + Math.sin(gameTime*7)*0.22;
+function barrierGeom(){
+  if (barrierActive <= 0 || barrierMode !== 'tri' || !barrierTri.length) return null;
+  return { tri: barrierTri, apex: barrierApex, pulse: 0.8 + Math.sin(gameTime*7)*0.2 };
+}
 
+function drawBarrierFace(){
+  const G = barrierGeom(); if (!G) return;
+  const { tri, apex, pulse } = G;
   ctx.save();
-
-  // 底面（正方形）漸層
-  const g = ctx.createRadialGradient(cx, cy, 10, cx, cy, 170);
-  g.addColorStop(0, `rgba(255,150,225,${0.05*pulse})`);
-  g.addColorStop(0.75, `rgba(255,110,200,${0.14*pulse})`);
-  g.addColorStop(1, 'rgba(255,90,190,0)');
+  // 四個三角側面（50% 透明粉）
+  if (apex){
+    for (let k=0;k<tri.length;k++){
+      const a = tri[k], b = tri[(k+1)%tri.length];
+      ctx.beginPath();
+      ctx.moveTo(apex.x, apex.y);
+      ctx.lineTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.closePath();
+      ctx.fillStyle = `rgba(255,120,200,${0.5*pulse})`;
+      ctx.fill();
+    }
+  }
+  // 底面
   ctx.beginPath();
   ctx.moveTo(tri[0].x, tri[0].y);
   for (let i=1;i<tri.length;i++) ctx.lineTo(tri[i].x, tri[i].y);
   ctx.closePath();
-  ctx.fillStyle = g; ctx.fill();
+  ctx.fillStyle = `rgba(255,120,200,${0.35*pulse})`;
+  ctx.fill();
+  ctx.restore();
+}
 
-  // 底面光束邊
-  const beam = (ax, ay, bx, by, w, a) => {
-    ctx.strokeStyle = `rgba(255,190,235,${a})`;
-    ctx.lineWidth = w;
-    ctx.shadowColor = '#ff7ad9'; ctx.shadowBlur = 18;
+function drawBarrierEdge(){
+  const G = barrierGeom(); if (!G) return;
+  const { tri, apex, pulse } = G;
+  ctx.save();
+  const line = (ax, ay, bx, by) => {
+    ctx.strokeStyle = `rgba(255,190,235,${0.95})`;
+    ctx.lineWidth = 1.6;
+    ctx.shadowColor = '#ff7ad9';
+    ctx.shadowBlur = 10;
     ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
     ctx.shadowBlur = 0;
   };
+  // 底面四邊
   for (let k=0;k<tri.length;k++){
-    const a = tri[k], b2 = tri[(k+1)%tri.length];
-    beam(a.x, a.y, b2.x, b2.y, 7*pulse + 3, 0.85);
-    beam(a.x, a.y, b2.x, b2.y, 2.2, 1);
+    const a = tri[k], b = tri[(k+1)%tri.length];
+    line(a.x, a.y, b.x, b.y);
   }
-
-  // 側面（頂點到底面四角）淡線
-  if (barrierApex){
-    tri.forEach(p => {
-      ctx.strokeStyle = `rgba(255,170,225,${0.22*pulse})`;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(barrierApex.x, barrierApex.y);
-      ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-    });
-  }
+  // 側稜四條
+  if (apex) tri.forEach(p => line(apex.x, apex.y, p.x, p.y));
 
   // 五枚翼狀感應炮
   for (const f of barrierFins){
@@ -2067,8 +2082,19 @@ function drawBarrierFins(){
     ctx.drawImage(img, -fw/2, -fh*0.42, fw, fh);
     ctx.restore();
   }
-
   ctx.restore();
+}
+
+function drawBarrierFins(){
+  const L = (AL_BARRIER.layer || {});
+  if (L.face !== 'front') drawBarrierFace();
+  if (L.edge !== 'front') drawBarrierEdge();
+}
+
+function drawBarrierFront(){
+  const L = (AL_BARRIER.layer || {});
+  if (L.face === 'front') drawBarrierFace();
+  if (L.edge === 'front') drawBarrierEdge();
 }
 
 function drawDuelFx(){
