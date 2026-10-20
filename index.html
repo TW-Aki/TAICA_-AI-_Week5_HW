@@ -623,10 +623,12 @@ function updateAtkFins(dt){
         const aimX = f.target.x + (f.tvx || 0) * lead;
         const aimY = f.target.y + (f.tvy || 0) * lead;
         const ax = aimX - f.x, ay = aimY - f.y, ad = Math.hypot(ax,ay) || 1;
-        // 砲口在機頭端
-        const muzzle = 22;
-        const mx = f.x + Math.cos(f.face) * muzzle;
-        const my = f.y + Math.sin(f.face) * muzzle;
+        // 砲口在頭部（原圖座標 -65,-15，縮放 62/150）
+        const fs = 62/150;
+        const rot = f.face + 2.915;
+        const hlx = -65*fs, hly = -15*fs;
+        const mx = f.x + Math.cos(rot)*hlx - Math.sin(rot)*hly;
+        const my = f.y + Math.sin(rot)*hlx + Math.cos(rot)*hly;
         bullets.push({ x:mx, y:my, vx:ax/ad*bs, vy:ay/ad*bs, r:10, dmg:2, color:'#ff9fe8', homing:true, target:f.target });
         spawnExplosion(mx, my, '#ff9fe8', 4);
         sfx('shot');
@@ -1736,26 +1738,39 @@ function drawAtkFins(){
     ctx.globalAlpha = a;
     ctx.translate(f.x, f.y);
 
-    // 尾部推進火焰（頭的反方向）
-    const tailX = -Math.cos(face) * 20, tailY = -Math.sin(face) * 20;
-    const fl = 16 + Math.sin(gameTime*26 + f.t*7) * 6;
-    const tg = ctx.createRadialGradient(tailX, tailY, 1, tailX, tailY, fl);
-    tg.addColorStop(0, 'rgba(190,235,255,0.95)');
-    tg.addColorStop(0.5, 'rgba(110,190,255,0.5)');
-    tg.addColorStop(1, 'rgba(110,190,255,0)');
-    ctx.fillStyle = tg;
-    ctx.beginPath(); ctx.arc(tailX, tailY, fl, 0, Math.PI*2); ctx.fill();
-
-    // 機身：開口端（頭）朝向目標
-    ctx.globalAlpha = a * 0.30;
-    ctx.fillStyle = '#9fd8ff';
-    ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha = a;
-
     if (IMG.funnel && IMG.funnel.complete && IMG.funnel.naturalWidth){
       const fw = 62, fh = fw * IMG.funnel.naturalHeight / IMG.funnel.naturalWidth;
-      ctx.rotate(face + Math.PI);   // 精靈開口朝 -x，轉半圈讓頭對準目標
+      const fs = fw / 150;
+      const rot = face + 2.915;      // 頭部（原圖 -65,-15）對準目標
+
+      // 機身光暈
+      ctx.globalAlpha = a * 0.25;
+      ctx.fillStyle = '#9fd8ff';
+      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha = a;
+
+      ctx.rotate(rot);
       ctx.drawImage(IMG.funnel, -fw/2, -fh/2, fw, fh);
+
+      // 尾部推進器（原圖 60,35）：沿機身軸向後噴
+      ctx.save();
+      ctx.translate(60*fs, 35*fs);
+      const L = 30 + Math.sin(gameTime*30 + f.t*8) * 9;
+      const g = ctx.createLinearGradient(0, 0, L, 0);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.25, 'rgba(160,225,255,0.8)');
+      g.addColorStop(1, 'rgba(80,160,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, -7); ctx.lineTo(L, 0); ctx.lineTo(0, 7);
+      ctx.closePath(); ctx.fill();
+      // 白色核心
+      ctx.fillStyle = 'rgba(255,255,255,0.9)';
+      ctx.beginPath();
+      ctx.moveTo(0, -3); ctx.lineTo(L*0.45, 0); ctx.lineTo(0, 3);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+
     } else {
       ctx.rotate(face);
       ctx.fillStyle = '#ffffff';
