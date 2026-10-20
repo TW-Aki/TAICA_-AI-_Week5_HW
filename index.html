@@ -1996,9 +1996,9 @@ function drawFunnels(){
     ctx.translate(f.x, f.y);
     if (useGy){
       // 裘尼：使用素材的翼狀感應炮
-      ctx.globalAlpha = 0.3;
+      ctx.globalAlpha = 0.14;
       ctx.fillStyle = f.color || '#ffd93d';
-      ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill();
       ctx.globalAlpha = 1;
       // 砲口永遠朝向玩家
       const ang = Math.atan2(player.y - f.y, player.x - f.x);
