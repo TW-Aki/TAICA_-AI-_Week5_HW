@@ -61,7 +61,7 @@ function sfx(kind){
       rg.gain.value = 0.55;
       rs.buffer = rifleBuf;
       rs.connect(rg); rg.connect(actx.destination);
-      rs.start(t, 0, Math.min(1.0, rifleBuf.duration));
+      rs.start(t, 0, Math.min(1.25, rifleBuf.duration));
       return;
     }
     o.type = 'square'; o.frequency.setValueAtTime(880, t);
