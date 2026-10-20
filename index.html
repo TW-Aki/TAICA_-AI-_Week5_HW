@@ -82,7 +82,7 @@ function sfx(kind){
   if (kind === 'shot'){
     if (rifleBuf){
       const rs = actx.createBufferSource(), rg = actx.createGain();
-      rg.gain.value = 0.35;
+      rg.gain.value = 0.10;
       rs.buffer = rifleBuf;
       rs.connect(rg); rg.connect(actx.destination);
       rs.start(t, 0, Math.min(1.25, rifleBuf.duration));
