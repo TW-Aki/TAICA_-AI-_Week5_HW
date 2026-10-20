@@ -2035,14 +2035,14 @@ function drawBarrierFaceIdx(i){
     ctx.moveTo(tri[0].x, tri[0].y);
     for (let k=1;k<tri.length;k++) ctx.lineTo(tri[k].x, tri[k].y);
     ctx.closePath();
-    ctx.fillStyle = `rgba(255,120,200,${0.22*pulse})`;
+    ctx.fillStyle = `rgba(255,120,200,${0.16*pulse})`;
     ctx.fill();
   } else if (apex){
     const a = tri[i-1], b = tri[i % tri.length];
     ctx.beginPath();
     ctx.moveTo(apex.x, apex.y); ctx.lineTo(a.x, a.y); ctx.lineTo(b.x, b.y);
     ctx.closePath();
-    ctx.fillStyle = `rgba(255,120,200,${0.35*pulse})`;
+    ctx.fillStyle = `rgba(255,120,200,${0.25*pulse})`;
     ctx.fill();
   }
   ctx.restore();
