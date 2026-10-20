@@ -598,6 +598,12 @@ function updateAtkFins(dt){
     const dx = f.tx - f.x, dy = f.ty - f.y;
     const d = Math.hypot(dx, dy) || 1;
     const speed = 1000;
+
+    // 機頭（開口端）持續朝向目標，平滑轉動
+    const desired = Math.atan2(f.ty - f.y, f.tx - f.x);
+    if (f.face === undefined) f.face = desired;
+    let diff = ((desired - f.face + Math.PI*3) % (Math.PI*2)) - Math.PI;
+    f.face += diff * Math.min(1, dt * 9);
     if (d > 12){
       f.x += dx/d * speed * dt;
       f.y += dy/d * speed * dt;
@@ -617,7 +623,12 @@ function updateAtkFins(dt){
         const aimX = f.target.x + (f.tvx || 0) * lead;
         const aimY = f.target.y + (f.tvy || 0) * lead;
         const ax = aimX - f.x, ay = aimY - f.y, ad = Math.hypot(ax,ay) || 1;
-        bullets.push({ x:f.x, y:f.y, vx:ax/ad*bs, vy:ay/ad*bs, r:10, dmg:2, color:'#ff9fe8', homing:true, target:f.target });
+        // 砲口在機頭端
+        const muzzle = 22;
+        const mx = f.x + Math.cos(f.face) * muzzle;
+        const my = f.y + Math.sin(f.face) * muzzle;
+        bullets.push({ x:mx, y:my, vx:ax/ad*bs, vy:ay/ad*bs, r:10, dmg:2, color:'#ff9fe8', homing:true, target:f.target });
+        spawnExplosion(mx, my, '#ff9fe8', 4);
         sfx('shot');
         // 射完換位置
         if (f.volley > 0) atkFinNewOffset(f);
@@ -1719,26 +1730,37 @@ function drawDuelFx(){
 
 function drawAtkFins(){
   for (const f of atkFins){
-    const ang = (f.tx !== undefined) ? Math.atan2(f.ty - f.y, f.tx - f.x) : 0;
+    const face = (f.face !== undefined) ? f.face : 0;
+    const a = Math.max(0, f.alpha);
     ctx.save();
-    ctx.globalAlpha = Math.max(0, f.alpha);
+    ctx.globalAlpha = a;
     ctx.translate(f.x, f.y);
 
-    // 推進光暈
-    ctx.globalAlpha = Math.max(0, f.alpha) * 0.35;
+    // 尾部推進火焰（頭的反方向）
+    const tailX = -Math.cos(face) * 20, tailY = -Math.sin(face) * 20;
+    const fl = 16 + Math.sin(gameTime*26 + f.t*7) * 6;
+    const tg = ctx.createRadialGradient(tailX, tailY, 1, tailX, tailY, fl);
+    tg.addColorStop(0, 'rgba(190,235,255,0.95)');
+    tg.addColorStop(0.5, 'rgba(110,190,255,0.5)');
+    tg.addColorStop(1, 'rgba(110,190,255,0)');
+    ctx.fillStyle = tg;
+    ctx.beginPath(); ctx.arc(tailX, tailY, fl, 0, Math.PI*2); ctx.fill();
+
+    // 機身：開口端（頭）朝向目標
+    ctx.globalAlpha = a * 0.30;
     ctx.fillStyle = '#9fd8ff';
-    ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha = Math.max(0, f.alpha);
+    ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = a;
 
     if (IMG.funnel && IMG.funnel.complete && IMG.funnel.naturalWidth){
       const fw = 62, fh = fw * IMG.funnel.naturalHeight / IMG.funnel.naturalWidth;
-      ctx.rotate(ang);
-      ctx.drawImage(IMG.funnel, -fw*0.15, -fh/2, fw, fh);
+      ctx.rotate(face + Math.PI);   // 精靈開口朝 -x，轉半圈讓頭對準目標
+      ctx.drawImage(IMG.funnel, -fw/2, -fh/2, fw, fh);
     } else {
-      ctx.rotate(f.t * 4);
+      ctx.rotate(face);
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.moveTo(0,-13); ctx.lineTo(9,0); ctx.lineTo(0,13); ctx.lineTo(-9,0);
+      ctx.moveTo(12,0); ctx.lineTo(-8,-9); ctx.lineTo(-8,9);
       ctx.closePath(); ctx.fill();
     }
     ctx.restore();
