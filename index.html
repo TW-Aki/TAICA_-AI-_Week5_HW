@@ -1745,11 +1745,13 @@ function drawAtkFins(){
       const fs = fw / 150;
       const rot = face + 2.645;      // 頭（90,67）朝向目標；原圖頭部方向 -151.6 度
 
-      // 機身光暈
-      ctx.globalAlpha = a * 0.25;
-      ctx.fillStyle = '#9fd8ff';
-      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
-      ctx.globalAlpha = a;
+      // 機身微光（柔和漸層，沒有硬邊）
+      const halo = ctx.createRadialGradient(0,0,2,0,0,24);
+      halo.addColorStop(0, 'rgba(159,216,255,0.28)');
+      halo.addColorStop(0.5, 'rgba(159,216,255,0.10)');
+      halo.addColorStop(1, 'rgba(159,216,255,0)');
+      ctx.fillStyle = halo;
+      ctx.beginPath(); ctx.arc(0,0,24,0,Math.PI*2); ctx.fill();
 
       ctx.rotate(rot);
       ctx.drawImage(IMG.funnel, -fw/2, -fh/2, fw, fh);
