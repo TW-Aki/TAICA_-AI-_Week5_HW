@@ -255,10 +255,11 @@ function refreshTouchUI(){
   const w = WEAPONS[weaponIndex];
   btnWeapon.innerHTML = (playerLevel < 1 ? '步槍' : w.name.replace('光束','')) + '<span class="sub">切換武器</span>';
   btnWeapon.disabled = playerLevel < 1;
-  btnSkill.disabled = playerLevel < 3;
-  btnSkill.innerHTML = (playerLevel < 3 ? 'LV3' : '感應炮') + '<span class="sub">技能</span>';
-  btnBarrier.disabled = playerLevel < 2;
-  btnBarrier.innerHTML = (playerLevel < 2 ? 'LV2' : '光束盾') + '<span class="sub">技能</span>';
+  const charging = (typeof skillLock !== 'undefined' && skillLock > 0);
+  btnSkill.disabled = playerLevel < 3 || charging;
+  btnSkill.innerHTML = (playerLevel < 3 ? 'LV3' : (charging ? '充能' : '感應炮')) + '<span class="sub">技能</span>';
+  btnBarrier.disabled = playerLevel < 2 || charging;
+  btnBarrier.innerHTML = (playerLevel < 2 ? 'LV2' : (charging ? '充能' : '光束盾')) + '<span class="sub">技能</span>';
 }
 btnWeapon.addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation();
@@ -297,6 +298,9 @@ const CFG = {
   bulletSpeed: 1500,
   barrierDur: 2.0,
   barrierCd: 5.5,
+  finsCd: 12,      // 翼狀感應炮冷卻
+  domeCd: 10,      // 光束屏障冷卻
+  skillRecharge: 6, // 技能結束後的共用充能
   navDuration: 12,
   mashNeed: 28,
   mashTime: 12,
@@ -310,7 +314,7 @@ let gameTime = 0;
 let player, bullets, enemyBullets, enemies, asteroids, boss, particles, stars, shockwaves, funnels;
 let navTimer, axisTimer, mashTimer, mashCount, axisX, axisTargetX;
 let shakeTime = 0, shakeMag = 0;
-let barrierUsed = 0, barrierActive = 0, attackTimer = 0, barrierMode = null, domeCd = 0, finsCd = 0;
+let barrierUsed = 0, barrierActive = 0, attackTimer = 0, barrierMode = null, domeCd = 0, finsCd = 0, skillLock = 0;
 let playerLevel = 0, exp = 0, weaponIndex = 0, waveTimer = 0, waveIndex = 0, autoTimer = 0, levelFlash = 0, waveSpawnT = 0;
 let barrierFins = [];
 let barrierTri = [];
@@ -334,7 +338,7 @@ function resetGame(){
   navTimer = CFG.navDuration;
   axisTimer = 0; mashTimer = CFG.mashTime; mashCount = 0;
   axisX = 2600; axisTargetX = 1560;
-  barrierUsed = 0; barrierActive = 0; attackTimer = 0; barrierMode = null; domeCd = 0; finsCd = 0;
+  barrierUsed = 0; barrierActive = 0; attackTimer = 0; barrierMode = null; domeCd = 0; finsCd = 0; skillLock = 0;
   duelFx = []; duelPending = 0;
   playerLevel = 0; exp = 0; weaponIndex = 0; waveTimer = 30; waveIndex = 0; autoTimer = 0;
   shakeTime = 0; shakeMag = 0;
@@ -1088,10 +1092,14 @@ function update(dt){
   if (barrierUsed > 0) barrierUsed -= dt;
   if (barrierActive > 0){
     barrierActive -= dt;
-    if (barrierActive <= 0) barrierMode = null;
+    if (barrierActive <= 0){
+      barrierMode = null;
+      skillLock = CFG.skillRecharge;   // 技能結束 → 6 秒充能，期間不能用另一個技能
+    }
   }
   if (domeCd > 0) domeCd -= dt;
   if (finsCd > 0) finsCd -= dt;
+  if (skillLock > 0) skillLock -= dt;
   updateBarrierFins(dt);
   updateAtkFins(dt);
   for (let i=duelFx.length-1;i>=0;i--){
@@ -1130,15 +1138,15 @@ function update(dt){
 
     // 屏障
     // 光束屏障（Shift / 右鍵）：粉色正三角形，刪除碰觸的彈幕
-    if (keys['Shift_pressed'] && barrierActive <= 0 && domeCd <= 0 && playerLevel >= 2){
-      domeCd = CFG.barrierCd;
+    if (keys['Shift_pressed'] && barrierActive <= 0 && domeCd <= 0 && skillLock <= 0 && playerLevel >= 2){
+      domeCd = CFG.domeCd;
       sfx('barrier');
       activateBarrier();
       shockwaves.push({ x:player.x, y:player.y, r:20, max:180, life:0.5, color:'#ff7ad9' });
     }
     // 翼狀感應炮（E）：LV3 解鎖，三枚白色感應炮飛出去自主攻擊，各射 3 輪
-    if (keys['KeyE_pressed'] && barrierActive <= 0 && finsCd <= 0 && playerLevel >= 3){
-      finsCd = CFG.barrierCd;
+    if (keys['KeyE_pressed'] && barrierActive <= 0 && finsCd <= 0 && skillLock <= 0 && playerLevel >= 3){
+      finsCd = CFG.finsCd;
       barrierMode = 'atk';
       barrierActive = 4.5;
       atkFins = Array.from({length: 6}, (_, i) => {
@@ -2938,7 +2946,7 @@ function drawHUD(){
     color: playerLevel >= 2 ? '#ff9fe8' : '#5b6b7a',
     active: barrierMode === 'tri',
     ready: barReady,
-    cdRatio: playerLevel >= 2 ? Math.max(0, Math.min(1, domeCd / CFG.barrierCd)) : 1,
+    cdRatio: playerLevel >= 2 ? Math.max(0, Math.min(1, Math.max(domeCd / CFG.domeCd, skillLock / CFG.skillRecharge))) : 1,
     keyLabel: playerLevel >= 2 ? 'SHIFT / 右鍵' : 'LV2 解鎖',
     name: '光束屏障',
     glyph: glyphFins
@@ -2949,7 +2957,7 @@ function drawHUD(){
     color: playerLevel >= 3 ? '#dff3ff' : '#5b6b7a',
     active: barrierMode === 'atk',
     ready: atkReady,
-    cdRatio: playerLevel >= 3 ? Math.max(0, Math.min(1, finsCd / CFG.barrierCd)) : 1,
+    cdRatio: playerLevel >= 3 ? Math.max(0, Math.min(1, Math.max(finsCd / CFG.finsCd, skillLock / CFG.skillRecharge))) : 1,
     keyLabel: playerLevel >= 3 ? 'E' : 'LV3 解鎖',
     name: '翼狀感應炮',
     glyph: glyphDrones
