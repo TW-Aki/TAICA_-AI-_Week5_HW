@@ -2058,33 +2058,29 @@ function drawBoss(){
 
       jets.forEach((j, i) => {
         if (!j.on) return;
-        const base = j.big ? 24 : 12;
-        const span = j.big ? 20 : 26;
+        const base = j.big ? 26 : 13;
+        const span = j.big ? 18 : 22;
         const len = base + Math.min(1.2, j.pw) * span + Math.sin(boss.t*22 + i*1.7)*2.5;
-        const ex = j.n.x + j.dx*len*1.6, ey = j.n.y + j.dy*len*1.6;
-        const px = -j.dy, py = j.dx;
-        const wo = j.big ? 17 : 13, wi = j.big ? 10 : 7;
-        const g = ctx.createLinearGradient(j.n.x, j.n.y, ex, ey);
-        g.addColorStop(0, 'rgba(255,190,90,0.30)');
-        g.addColorStop(0.5, 'rgba(255,140,50,0.18)');
-        g.addColorStop(1, 'rgba(255,100,30,0)');
-        ctx.save();
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.moveTo(j.n.x + px*wo, j.n.y + py*wo);
-        ctx.quadraticCurveTo(j.n.x + j.dx*len*0.9 + px*6, j.n.y + j.dy*len*0.9 + py*6, ex, ey);
-        ctx.quadraticCurveTo(j.n.x + j.dx*len*0.9 - px*6, j.n.y + j.dy*len*0.9 - py*6, j.n.x - px*wo, j.n.y - py*wo);
-        ctx.closePath(); ctx.fill();
-        ctx.restore();
-        const g2 = ctx.createLinearGradient(j.n.x, j.n.y, j.n.x + j.dx*len*0.7, j.n.y + j.dy*len*0.7);
-        g2.addColorStop(0, 'rgba(255,255,245,0.85)');
-        g2.addColorStop(1, 'rgba(255,200,110,0)');
-        ctx.fillStyle = g2;
-        ctx.beginPath();
-        ctx.moveTo(j.n.x + px*wi, j.n.y + py*wi);
-        ctx.lineTo(j.n.x + j.dx*len*0.7, j.n.y + j.dy*len*0.7);
-        ctx.lineTo(j.n.x - px*wi, j.n.y - py*wi);
-        ctx.closePath(); ctx.fill();
+        const rad = j.big ? 15 : 9;
+        // 由噴口往外疊加柔光圓，形成火焰
+        for (let k=0;k<4;k++){
+          const t = k/3;
+          const cx = j.n.x + j.dx*len*t;
+          const cy = j.n.y + j.dy*len*t;
+          const r = rad * (1 - t*0.7);
+          const rg = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+          const a = (j.big ? 0.55 : 0.45) * (1 - t*0.55);
+          rg.addColorStop(0, `rgba(255,${245 - t*70},${205 - t*140},${a})`);
+          rg.addColorStop(1, 'rgba(255,110,30,0)');
+          ctx.fillStyle = rg;
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+        }
+        // 噴口亮點
+        const core = ctx.createRadialGradient(j.n.x, j.n.y, 0, j.n.x, j.n.y, rad*0.55);
+        core.addColorStop(0, 'rgba(255,255,250,0.95)');
+        core.addColorStop(1, 'rgba(255,220,150,0)');
+        ctx.fillStyle = core;
+        ctx.beginPath(); ctx.arc(j.n.x, j.n.y, rad*0.55, 0, Math.PI*2); ctx.fill();
       });
     }
 
