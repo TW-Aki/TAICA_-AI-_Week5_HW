@@ -1728,7 +1728,8 @@ function drawPlayer(){
 
     // 部件模型：射擊姿態 / 感應炮出動時隱藏背部翼狀感應炮
     const firing = attackTimer > (currentWeapon().id === 'bazooka' ? 0.38 : 0.06);
-    const finsOut = atkFins.length > 0;
+    // 感應炮出擊、或光束護盾展開時，背部的感應炮都要隱藏
+    const finsOut = atkFins.length > 0 || (barrierActive > 0 && barrierMode === 'tri');
     const hasBaz = playerLevel >= 1;
     const usingBaz = currentWeapon().id === 'bazooka';
     let key;
