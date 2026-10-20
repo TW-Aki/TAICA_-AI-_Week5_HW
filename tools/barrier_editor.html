@@ -68,11 +68,11 @@ function renderLayers(){
   const box = document.getElementById('orderList');
   if (!box) return;
   const rows = [];
-  const FACE = ['底面','側面 1','側面 2','側面 3','側面 4'];
-  const EDGE = ['底邊 1','底邊 2','底邊 3','底邊 4','側稜 1','側稜 2','側稜 3','側稜 4'];
+  const FACE = ['面底（底面）','面1（側面）','面2（側面）','面3（側面）','面4（側面）'];
+  const EDGE = ['邊1（底邊）','邊2（底邊）','邊3（底邊）','邊4（底邊）','稜1（側稜）','稜2（側稜）','稜3（側稜）','稜4（側稜）'];
   FACE.forEach((n,i)=>rows.push({g:'face', i, n, v:faceFront[i]}));
   EDGE.forEach((n,i)=>rows.push({g:'edge', i, n, v:edgeFront[i]}));
-  for (let i=0;i<5;i++) rows.push({g:'fin', i, n:'感應炮 '+(i+1), v:finFront[i]});
+  for (let i=0;i<5;i++) rows.push({g:'fin', i, n:'炮'+(i+1), v:finFront[i]});
 
   let html = '';
   let last = '';
@@ -187,6 +187,43 @@ function draw(){
     ctx.fillStyle = '#c0392b'; ctx.font = 'bold 12px system-ui';
     ctx.fillText('B'+(i+1), p.x+12, p.y-10);
   });
+
+  // ===== 元素編號標籤 =====
+  ctx.font = 'bold 12px system-ui';
+  ctx.textAlign = 'center';
+  // 錐面（底面 + 4 側面）
+  const faceC = (i) => {
+    if (i === 0){
+      let x=0,y=0; tri.forEach(p=>{x+=p.x;y+=p.y;}); return {x:x/tri.length, y:y/tri.length};
+    }
+    const a = tri[i-1], b = tri[i % tri.length], ap = poles[0];
+    return {x:(a.x+b.x+ap.x)/3, y:(a.y+b.y+ap.y)/3};
+  };
+  for (let i=0;i<5;i++){
+    const c = faceC(i);
+    ctx.fillStyle = 'rgba(40,80,140,0.85)';
+    ctx.fillText('面'+(i===0?'底':i), c.x, c.y);
+  }
+  // 邊（4 底邊 + 4 側稜）
+  const edgeMid = (i) => {
+    if (i < tri.length){
+      const a = tri[i], b = tri[(i+1)%tri.length];
+      return {x:(a.x+b.x)/2, y:(a.y+b.y)/2};
+    }
+    const p2 = tri[i-tri.length], ap = poles[0];
+    return {x:(p2.x+ap.x)/2, y:(p2.y+ap.y)/2};
+  };
+  for (let i=0;i<8;i++){
+    const m = edgeMid(i);
+    ctx.fillStyle = 'rgba(170,110,0,0.95)';
+    ctx.fillText(i<4 ? ('邊'+(i+1)) : ('稜'+(i-3)), m.x, m.y-4);
+  }
+  // 感應炮
+  fins.forEach((f,i)=>{
+    ctx.fillStyle = 'rgba(20,110,60,0.95)';
+    ctx.fillText('炮'+(i+1), f.x, f.y+30);
+  });
+  ctx.textAlign = 'left';
 
   // 中心十字
   ctx.strokeStyle = 'rgba(30,60,100,0.5)'; ctx.lineWidth = 1;
