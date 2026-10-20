@@ -17,12 +17,12 @@ canvas{cursor:crosshair}
   <h1>裘尼 推進器標定（g15）</h1>
   <div class="hint">
     點擊放置推進噴口（可放多個）：<br>
-    1. 左噴口　2. 右噴口　3. 中央（可選）<br>
+    1. <b style="color:#ff9f43">上噴口</b>　2. <b style="color:#ff9f43">下噴口</b>　3. <b style="color:#ff9f43">中央噴口</b><br>
     點完循環，拖曳可微調。
   </div>
-  <div class="row"><span>噴口 #1</span><b id="v1">-</b></div>
-  <div class="row"><span>噴口 #2</span><b id="v2">-</b></div>
-  <div class="row"><span>噴口 #3</span><b id="v3">-</b></div>
+  <div class="row"><span>上噴口</span><b id="v1">-</b></div>
+  <div class="row"><span>下噴口</span><b id="v2">-</b></div>
+  <div class="row"><span>中央噴口</span><b id="v3">-</b></div>
   <div class="row"><span>圖檔尺寸</span><b id="vs">-</b></div>
   <button id="btnCopy">匯出座標</button>
   <textarea id="out" readonly></textarea>
@@ -51,7 +51,7 @@ function draw(){
     ctx.beginPath(); ctx.moveTo(p.x*ZOOM,p.y*ZOOM-12); ctx.lineTo(p.x*ZOOM,p.y*ZOOM+12); ctx.stroke();
     ctx.beginPath(); ctx.arc(p.x*ZOOM,p.y*ZOOM,8,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle='#ff9f43'; ctx.font='bold 13px system-ui';
-    ctx.fillText('#'+(i+1), p.x*ZOOM+14, p.y*ZOOM-10);
+    ctx.fillText(['上','下','中'][i], p.x*ZOOM+14, p.y*ZOOM-10);
   });
 }
 function toCanvas(e){const r=cv.getBoundingClientRect();return {x:(e.clientX-r.left)/ZOOM, y:(e.clientY-r.top)/ZOOM};}
