@@ -17,12 +17,16 @@ canvas{cursor:crosshair}
   <h1>裘尼 砲口標定</h1>
   <div class="hint">
     點擊畫布放置標記：<br>
-    第 1 點 = <b style="color:#ffd93d">步槍砲口</b><br>
-    第 2 點 = <b style="color:#ff6b6b">飛彈夾艙</b><br>
-    再點一次會重新放置。
+    依序點 5 個位置：<br>
+    1. <b style="color:#ffd93d">機槍砲口</b><br>
+    2~5. <b style="color:#ff6b6b">盾牌粒子砲的 4 個發射孔</b><br>
+    點完會循環回第 1 點。
   </div>
-  <div class="row"><span>步槍砲口</span><b id="v1">-</b></div>
-  <div class="row"><span>飛彈夾艙</span><b id="v2">-</b></div>
+  <div class="row"><span>機槍砲口</span><b id="v1">-</b></div>
+  <div class="row"><span>粒子砲 #1</span><b id="v2">-</b></div>
+  <div class="row"><span>粒子砲 #2</span><b id="v3">-</b></div>
+  <div class="row"><span>粒子砲 #3</span><b id="v4">-</b></div>
+  <div class="row"><span>粒子砲 #4</span><b id="v5">-</b></div>
   <div class="row"><span>圖檔尺寸</span><b id="vs">-</b></div>
   <button id="btnCopy">匯出座標</button>
   <textarea id="out" readonly></textarea>
@@ -32,6 +36,7 @@ const IMG=new Image(); IMG.src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAS
 const ZOOM=2.2;
 const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
 let W=0,H=0, pts=[], next=0;
+const NAMES=['機槍','砲1','砲2','砲3','砲4'];
 IMG.onload=()=>{W=IMG.width;H=IMG.height;cv.width=W*ZOOM;cv.height=H*ZOOM;
  document.getElementById('vs').textContent=W+'×'+H; draw();};
 function draw(){
@@ -46,20 +51,22 @@ function draw(){
    ctx.beginPath();ctx.moveTo(p.x*ZOOM-10,p.y*ZOOM);ctx.lineTo(p.x*ZOOM+10,p.y*ZOOM);ctx.stroke();
    ctx.beginPath();ctx.moveTo(p.x*ZOOM,p.y*ZOOM-10);ctx.lineTo(p.x*ZOOM,p.y*ZOOM+10);ctx.stroke();
    ctx.fillStyle=col;ctx.font='bold 13px system-ui';
-   ctx.fillText(i===0?'槍口':'飛彈', p.x*ZOOM+12, p.y*ZOOM-8);
+   ctx.fillText(NAMES[i], p.x*ZOOM+12, p.y*ZOOM-8);
  });
 }
 cv.addEventListener('mousedown',e=>{
  const r=cv.getBoundingClientRect();
  const x=Math.round((e.clientX-r.left)/ZOOM), y=Math.round((e.clientY-r.top)/ZOOM);
- pts[next]= {x,y}; next=(next+1)%2;
- document.getElementById('v1').textContent = pts[0] ? pts[0].x+', '+pts[0].y : '-';
- document.getElementById('v2').textContent = pts[1] ? pts[1].x+', '+pts[1].y : '-';
+ pts[next]= {x,y}; next=(next+1)%5;
+ for (let k=0;k<5;k++){
+   const el=document.getElementById('v'+(k+1));
+   if (el) el.textContent = pts[k] ? pts[k].x+', '+pts[k].y : '-';
+ }
  draw();
 });
 document.getElementById('btnCopy').onclick=()=>{
  const ta=document.getElementById('out');
- ta.value=JSON.stringify({size:[W,H], gun:pts[0]||null, missile:pts[1]||null});
+ ta.value=JSON.stringify({size:[W,H], gun:pts[0]||null, shield:pts.slice(1,5).filter(Boolean)});
  ta.select(); try{document.execCommand('copy')}catch(e){}
 };
 </script></body></html>
