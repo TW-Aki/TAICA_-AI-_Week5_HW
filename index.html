@@ -1394,7 +1394,12 @@ function updateBoss2(dt){
     boss.x += (1540 - boss.x) * Math.min(1, dt*3.2);
     if (Math.abs(boss.x - 1540) < 6){ boss.x = 1540; boss.entering = false; }
   } else if (!boss.dead){
-    boss.y = H*0.45 + Math.sin(boss.t*(0.9 + boss.phase*0.25)) * 170;
+    if (boss.beamState){
+      // 發射メガ粒子砲時定在原地，對齊光束軌道
+      boss.y += (boss.beamState.y - boss.y) * Math.min(1, dt*3.2);
+    } else {
+      boss.y = H*0.45 + Math.sin(boss.t*(0.9 + boss.phase*0.25)) * 170;
+    }
     boss.fireTimer -= dt;
     // メガ粒子砲：佔全螢幕 1/3 的帶狀光束
     if (boss.wireCd === undefined) boss.wireCd = 8;
