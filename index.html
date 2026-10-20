@@ -2194,6 +2194,7 @@ function drawFunnels(){
 // α 推進火焰：over=false 畫在機體下層、over=true 畫在上層
 function drawAlJets(over){
   if (!boss || boss.dead) return;
+  if (boss.chargeState === 'wind') return;   // 衝撞前先關掉推進
   const puls = 0.85 + Math.sin(boss.t*7)*0.15;
   AL_JETS.forEach((j, i) => {
     if (!!j.over !== over) return;
@@ -2284,6 +2285,21 @@ function drawBoss(){
     const sprA = (armsOut && IMG.alphaNoPod && IMG.alphaNoPod.complete) ? IMG.alphaNoPod : IMG.alpha;
     const bw = 380, bh = bw * sprA.naturalHeight / sprA.naturalWidth;
     if (boss.dead) ctx.globalAlpha = Math.max(0, boss.deathTimer / 1.2);
+
+    // 衝撞時轉向玩家，結束後緩慢轉回
+    if (boss.tilt === undefined) boss.tilt = 0;
+    if (boss.chargeState){
+      const tgt = Math.atan2(player.y - boss.y, player.x - boss.x) + Math.PI;
+      let d = tgt - boss.tilt;
+      while (d > Math.PI) d -= Math.PI*2;
+      while (d < -Math.PI) d += Math.PI*2;
+      boss.tilt += d * 0.16;
+    } else if (Math.abs(boss.tilt) > 0.005){
+      boss.tilt *= 0.88;
+      if (Math.abs(boss.tilt) <= 0.005) boss.tilt = 0;
+    }
+    if (boss.tilt) ctx.rotate(boss.tilt);
+
     drawAlJets(false);       // 下層火焰（在機體後面）
     ctx.drawImage(sprA, -bw/2, -bh/2, bw, bh);
     drawAlJets(true);        // 上層火焰（1/2/7/8 號）
