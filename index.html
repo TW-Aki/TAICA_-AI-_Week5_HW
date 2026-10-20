@@ -625,8 +625,8 @@ function updateAtkFins(dt){
         const ax = aimX - f.x, ay = aimY - f.y, ad = Math.hypot(ax,ay) || 1;
         // 砲口在頭部（原圖座標 -65,-15，縮放 62/150）
         const fs = 62/150;
-        const rot = f.face + 2.915;
-        const hlx = -65*fs, hly = -15*fs;
+        const rot = f.face - 0.093;
+        const hlx = 40*fs, hly = 15*fs;
         const mx = f.x + Math.cos(rot)*hlx - Math.sin(rot)*hly;
         const my = f.y + Math.sin(rot)*hlx + Math.cos(rot)*hly;
         bullets.push({ x:mx, y:my, vx:ax/ad*bs, vy:ay/ad*bs, r:10, dmg:2, color:'#ff9fe8', homing:true, target:f.target });
@@ -1741,7 +1741,7 @@ function drawAtkFins(){
     if (IMG.funnel && IMG.funnel.complete && IMG.funnel.naturalWidth){
       const fw = 62, fh = fw * IMG.funnel.naturalHeight / IMG.funnel.naturalWidth;
       const fs = fw / 150;
-      const rot = face + 2.915;      // 頭部（原圖 -65,-15）對準目標
+      const rot = face - 0.093;      // 底座（頭）朝向目標，垂直於底座兩點連線
 
       // 機身光暈
       ctx.globalAlpha = a * 0.25;
@@ -1752,22 +1752,25 @@ function drawAtkFins(){
       ctx.rotate(rot);
       ctx.drawImage(IMG.funnel, -fw/2, -fh/2, fw, fh);
 
-      // 尾部推進器（原圖 60,35）：沿機身軸向後噴
+      // 尾部推進器（鰭片端，原圖 -68,0）：沿機身軸向後噴
       ctx.save();
-      ctx.translate(60*fs, 35*fs);
-      const L = 30 + Math.sin(gameTime*30 + f.t*8) * 9;
-      const g = ctx.createLinearGradient(0, 0, L, 0);
+      ctx.translate(-68*fs, 0);
+      const L = 34 + Math.sin(gameTime*30 + f.t*8) * 9;
+      const w0 = 11;   // 噴口半寬
+      const g = ctx.createLinearGradient(0, 0, -L, 0);
       g.addColorStop(0, 'rgba(255,255,255,0.95)');
-      g.addColorStop(0.25, 'rgba(160,225,255,0.8)');
+      g.addColorStop(0.22, 'rgba(170,230,255,0.85)');
+      g.addColorStop(0.6, 'rgba(110,190,255,0.35)');
       g.addColorStop(1, 'rgba(80,160,255,0)');
       ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.moveTo(0, -7); ctx.lineTo(L, 0); ctx.lineTo(0, 7);
+      ctx.moveTo(0, -w0); ctx.lineTo(-L, -w0*0.25);
+      ctx.lineTo(-L, w0*0.25); ctx.lineTo(0, w0);
       ctx.closePath(); ctx.fill();
-      // 白色核心
+      // 白熱核心
       ctx.fillStyle = 'rgba(255,255,255,0.9)';
       ctx.beginPath();
-      ctx.moveTo(0, -3); ctx.lineTo(L*0.45, 0); ctx.lineTo(0, 3);
+      ctx.moveTo(0, -w0*0.42); ctx.lineTo(-L*0.5, 0); ctx.lineTo(0, w0*0.42);
       ctx.closePath(); ctx.fill();
       ctx.restore();
 
