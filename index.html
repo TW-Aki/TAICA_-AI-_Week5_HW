@@ -2051,33 +2051,39 @@ function drawBoss(){
       const dnPower = Math.max(0,  vy) / 260;
 
       const jets = [
-        { n: GY_THRUST[0], dx: 0, dy: -1, on: upPower > 0.35, pw: upPower },
-        { n: GY_THRUST[1], dx: 0, dy:  1, on: dnPower > 0.35, pw: dnPower },
-        { n: GY_THRUST[2], dx: 1, dy:  0, on: true,           pw: 0.55 }
+        { n: GY_THRUST[0], dx: 0, dy:  1, on: upPower > 0.35, pw: upPower },   // 上噴口 → 往下
+        { n: GY_THRUST[1], dx: 0, dy: -1, on: dnPower > 0.35, pw: dnPower },   // 下噴口 → 往上
+        { n: GY_THRUST[2], dx: 1, dy:  0, on: true,           pw: 0.55, big: true }
       ];
 
       jets.forEach((j, i) => {
         if (!j.on) return;
-        const len = 12 + Math.min(1.2, j.pw) * 26 + Math.sin(boss.t*22 + i*1.7)*2.5;
+        const base = j.big ? 24 : 12;
+        const span = j.big ? 20 : 26;
+        const len = base + Math.min(1.2, j.pw) * span + Math.sin(boss.t*22 + i*1.7)*2.5;
         const ex = j.n.x + j.dx*len*1.6, ey = j.n.y + j.dy*len*1.6;
         const px = -j.dy, py = j.dx;
+        const wo = j.big ? 17 : 13, wi = j.big ? 10 : 7;
         const g = ctx.createLinearGradient(j.n.x, j.n.y, ex, ey);
-        g.addColorStop(0, 'rgba(255,200,110,0.55)');
-        g.addColorStop(1, 'rgba(255,120,40,0)');
+        g.addColorStop(0, 'rgba(255,190,90,0.30)');
+        g.addColorStop(0.5, 'rgba(255,140,50,0.18)');
+        g.addColorStop(1, 'rgba(255,100,30,0)');
+        ctx.save();
         ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.moveTo(j.n.x + px*13, j.n.y + py*13);
+        ctx.moveTo(j.n.x + px*wo, j.n.y + py*wo);
         ctx.quadraticCurveTo(j.n.x + j.dx*len*0.9 + px*6, j.n.y + j.dy*len*0.9 + py*6, ex, ey);
-        ctx.quadraticCurveTo(j.n.x + j.dx*len*0.9 - px*6, j.n.y + j.dy*len*0.9 - py*6, j.n.x - px*13, j.n.y - py*13);
+        ctx.quadraticCurveTo(j.n.x + j.dx*len*0.9 - px*6, j.n.y + j.dy*len*0.9 - py*6, j.n.x - px*wo, j.n.y - py*wo);
         ctx.closePath(); ctx.fill();
-        const g2 = ctx.createLinearGradient(j.n.x, j.n.y, j.n.x + j.dx*len, j.n.y + j.dy*len);
-        g2.addColorStop(0, 'rgba(255,255,240,0.95)');
-        g2.addColorStop(1, 'rgba(255,210,120,0)');
+        ctx.restore();
+        const g2 = ctx.createLinearGradient(j.n.x, j.n.y, j.n.x + j.dx*len*0.7, j.n.y + j.dy*len*0.7);
+        g2.addColorStop(0, 'rgba(255,255,245,0.85)');
+        g2.addColorStop(1, 'rgba(255,200,110,0)');
         ctx.fillStyle = g2;
         ctx.beginPath();
-        ctx.moveTo(j.n.x + px*7, j.n.y + py*7);
-        ctx.lineTo(j.n.x + j.dx*len, j.n.y + j.dy*len);
-        ctx.lineTo(j.n.x - px*7, j.n.y - py*7);
+        ctx.moveTo(j.n.x + px*wi, j.n.y + py*wi);
+        ctx.lineTo(j.n.x + j.dx*len*0.7, j.n.y + j.dy*len*0.7);
+        ctx.lineTo(j.n.x - px*wi, j.n.y - py*wi);
         ctx.closePath(); ctx.fill();
       });
     }
