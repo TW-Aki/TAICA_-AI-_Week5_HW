@@ -66,13 +66,7 @@ screenshots/    畫面截圖
 
 ## 部署（GitHub Pages）
 
-發布來源設定為 **main 分支 / docs 資料夾**。
+發布來源：**main 分支 / 根目錄 (root)**。遊戲是單一 `index.html`（圖片與音效皆內嵌），
+直接開啟網址即可遊玩，不需要額外建置。
 
-`docs/index.html` 是 `index.html` 的複本（遊戲本身已把圖片與音效全部內嵌，單檔即可運行）。
-
-修改遊戲後執行：
-
-```bash
-./sync_docs.sh   # 把 index.html 複製到 docs/
-git add -A && git commit -m "deploy" && git push
-```
+根目錄的 `.nojekyll` 會讓 GitHub 跳過 Jekyll 編譯。
