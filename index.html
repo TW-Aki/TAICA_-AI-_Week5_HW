@@ -2051,8 +2051,8 @@ function drawBoss(){
       const dnPower = Math.max(0,  vy) / 260;
 
       const jets = [
-        { n: GY_THRUST[0], dx: 0, dy:  1, on: upPower > 0.35, pw: upPower },   // 上噴口 → 往下
-        { n: GY_THRUST[1], dx: 0, dy: -1, on: dnPower > 0.35, pw: dnPower },   // 下噴口 → 往上
+        { n: GY_THRUST[0], dx: 0, dy: -1, on: dnPower > 0.35, pw: dnPower },   // 上噴口：火焰朝上（下降時噴）
+        { n: GY_THRUST[1], dx: 0, dy:  1, on: upPower > 0.35, pw: upPower },   // 下噴口：火焰朝下（上升時噴）
         { n: GY_THRUST[2], dx: 1, dy:  0, on: true,           pw: 0.55, big: true }
       ];
 
