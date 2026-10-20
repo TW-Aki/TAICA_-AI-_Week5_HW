@@ -351,7 +351,7 @@ const AL_WIRE_MOUNT = [ {x:-168, y:-19}, {x:165, y:-145} ];
 // α メガ粒子砲 發射口（相對精靈中心，顯示寬 380）
 const AL_BEAM_NOZ = [ {x:-93.8, y:-50.0}, {x:-79.0, y:-69.7} ];
 // α 推進器（位置 + 向量，顯示寬 380）
-const AL_JETS = [{"x": 106.1, "y": 121.5, "dx": 0.0, "dy": 21.0}, {"x": 127.1, "y": 135.1, "dx": 0.0, "dy": 25.9}, {"x": 135.7, "y": 58.6, "dx": 12.3, "dy": -12.3}, {"x": 161.6, "y": 75.9, "dx": 17.3, "dy": -14.8}, {"x": 183.8, "y": 147.4, "dx": 95.0, "dy": 81.4}, {"x": 12.3, "y": 184.4, "dx": 23.4, "dy": 58.0}, {"x": 23.4, "y": 157.3, "dx": 17.3, "dy": 21.0}, {"x": 17.3, "y": 143.7, "dx": 11.1, "dy": 17.3}, {"x": -30.8, "y": 156.1, "dx": -12.3, "dy": 9.9}, {"x": -24.7, "y": 168.4, "dx": -16.0, "dy": 12.3}, {"x": 24.7, "y": 116.6, "dx": 6.2, "dy": -8.6}];
+const AL_JETS = [{"x": 106.1, "y": 121.5, "dx": 0.0, "dy": 21.0, "over": true}, {"x": 127.1, "y": 135.1, "dx": 0.0, "dy": 25.9, "over": true}, {"x": 135.7, "y": 58.6, "dx": 12.3, "dy": -12.3}, {"x": 161.6, "y": 75.9, "dx": 17.3, "dy": -14.8}, {"x": 183.8, "y": 147.4, "dx": 95.0, "dy": 81.4}, {"x": 12.3, "y": 184.4, "dx": 23.4, "dy": 58.0}, {"x": 23.4, "y": 157.3, "dx": 17.3, "dy": 21.0, "over": true}, {"x": 17.3, "y": 143.7, "dx": 11.1, "dy": 17.3, "over": true}, {"x": -30.8, "y": 156.1, "dx": -12.3, "dy": 9.9}, {"x": -24.7, "y": 168.4, "dx": -16.0, "dy": 12.3}, {"x": 24.7, "y": 116.6, "dx": 6.2, "dy": -8.6}];
 // 裘尼推進器噴口（相對精靈中心，顯示寬 260）
 const GY_THRUST = [ {x:68.0,y:-46.0}, {x:101.1,y:3.2}, {x:116.2,y:-14.4} ];
 const GY_SHIELD = [ {x:1,y:30}, {x:-15,y:35}, {x:14,y:54}, {x:-3,y:60} ];
@@ -2190,6 +2190,37 @@ function drawFunnels(){
   }
 }
 
+
+// α 推進火焰：over=false 畫在機體下層、over=true 畫在上層
+function drawAlJets(over){
+  if (!boss || boss.dead) return;
+  const puls = 0.85 + Math.sin(boss.t*7)*0.15;
+  AL_JETS.forEach((j, i) => {
+    if (!!j.over !== over) return;
+    const flick = 0.9 + Math.sin(boss.t*23 + i*1.9)*0.12;
+    const L = Math.max(32, Math.hypot(j.dx, j.dy) * puls * flick);
+    const a = Math.atan2(j.dy, j.dx);
+    const ex = j.x + Math.cos(a)*L, ey = j.y + Math.sin(a)*L;
+    const px = -Math.sin(a), py = Math.cos(a);
+    const wid = 5 + L*0.095;
+    const g = ctx.createLinearGradient(j.x, j.y, ex, ey);
+    g.addColorStop(0, 'rgba(255,245,215,0.95)');
+    g.addColorStop(0.35, 'rgba(255,190,90,0.8)');
+    g.addColorStop(0.75, 'rgba(255,130,50,0.45)');
+    g.addColorStop(1, 'rgba(255,90,30,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(j.x + px*wid, j.y + py*wid);
+    ctx.lineTo(j.x + j.dx*0.35 + px*wid*0.55, j.y + j.dy*0.35 + py*wid*0.55);
+    ctx.lineTo(ex, ey);
+    ctx.lineTo(j.x + j.dx*0.35 - px*wid*0.55, j.y + j.dy*0.35 - py*wid*0.55);
+    ctx.lineTo(j.x - px*wid, j.y - py*wid);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,245,0.9)';
+    ctx.beginPath(); ctx.arc(j.x, j.y, wid*0.9, 0, Math.PI*2); ctx.fill();
+  });
+}
+
 function drawBoss(){
   if (!boss) return;
   ctx.save();
@@ -2253,36 +2284,9 @@ function drawBoss(){
     const sprA = (armsOut && IMG.alphaNoPod && IMG.alphaNoPod.complete) ? IMG.alphaNoPod : IMG.alpha;
     const bw = 380, bh = bw * sprA.naturalHeight / sprA.naturalWidth;
     if (boss.dead) ctx.globalAlpha = Math.max(0, boss.deathTimer / 1.2);
+    drawAlJets(false);       // 下層火焰（在機體後面）
     ctx.drawImage(sprA, -bw/2, -bh/2, bw, bh);
-
-    // 推進火焰（畫在機體上層，硬邊造型）
-    if (!boss.dead){
-      const puls = 0.85 + Math.sin(boss.t*7)*0.15;
-      AL_JETS.forEach((j, i) => {
-        const flick = 0.9 + Math.sin(boss.t*23 + i*1.9)*0.12;
-        const L = Math.max(32, Math.hypot(j.dx, j.dy) * puls * flick);   // 最短 32px
-        const a = Math.atan2(j.dy, j.dx);
-        const ex = j.x + Math.cos(a)*L, ey = j.y + Math.sin(a)*L;
-        const px = -Math.sin(a), py = Math.cos(a);
-        const wid = 5 + L*0.095;
-        const g = ctx.createLinearGradient(j.x, j.y, ex, ey);
-        g.addColorStop(0, 'rgba(255,245,215,0.95)');
-        g.addColorStop(0.35, 'rgba(255,190,90,0.8)');
-        g.addColorStop(0.75, 'rgba(255,130,50,0.45)');
-        g.addColorStop(1, 'rgba(255,90,30,0)');
-        ctx.fillStyle = g;
-        ctx.beginPath();
-        ctx.moveTo(j.x + px*wid, j.y + py*wid);
-        ctx.lineTo(j.x + j.dx*0.35 + px*wid*0.55, j.y + j.dy*0.35 + py*wid*0.55);
-        ctx.lineTo(ex, ey);
-        ctx.lineTo(j.x + j.dx*0.35 - px*wid*0.55, j.y + j.dy*0.35 - py*wid*0.55);
-        ctx.lineTo(j.x - px*wid, j.y - py*wid);
-        ctx.closePath(); ctx.fill();
-        // 噴口白點
-        ctx.fillStyle = 'rgba(255,255,245,0.9)';
-        ctx.beginPath(); ctx.arc(j.x, j.y, wid*0.9, 0, Math.PI*2); ctx.fill();
-      });
-    }
+    drawAlJets(true);        // 上層火焰（1/2/7/8 號）
     ctx.restore();
     drawWirePods();          // 纜線與莢艙蓋在機體上方
     drawBossBar();
