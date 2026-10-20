@@ -338,6 +338,8 @@ function spawnGearaDoga(){
 const GYF_MUZZLE = { x: -24.2, y: -8.5 };
 const GYF_THRUST = { x: 22.0, y: 3.3 };
 const GY_GUN = { x: -129, y: 7 };
+// 裘尼推進器噴口（相對精靈中心，顯示寬 260）
+const GY_THRUST = [ {x:68.0,y:-46.0}, {x:101.1,y:3.2}, {x:116.2,y:-14.4} ];
 const GY_SHIELD = [ {x:1,y:30}, {x:-15,y:35}, {x:14,y:54}, {x:-3,y:60} ];
 
 function spawnBoss1(){
@@ -2040,6 +2042,37 @@ function drawBoss(){
               ? IMG.gyuneiNoFin : IMG.gyunei;
     const bw = 260, bh = bw * spr.naturalHeight / spr.naturalWidth;
     if (boss.dead) ctx.globalAlpha = Math.max(0, boss.deathTimer / 1.2);
+
+    // 推進火焰（依上下移動速度調整長度）
+    if (!boss.dead){
+      const spd = 2.2 + boss.phase*0.5;
+      const vy = Math.cos(boss.t*spd) * spd * 260;
+      const boost = Math.min(1.4, Math.abs(vy)/320);
+      GY_THRUST.forEach((n, i) => {
+        const len = 13 + boost*20 + Math.sin(boss.t*22 + i*1.7)*2.5;
+        // 外層柔光
+        const g = ctx.createLinearGradient(n.x, n.y, n.x + len*1.6, n.y);
+        g.addColorStop(0, 'rgba(255,200,110,0.55)');
+        g.addColorStop(1, 'rgba(255,120,40,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(n.x, n.y - 13);
+        ctx.quadraticCurveTo(n.x + len*0.9, n.y - 6, n.x + len*1.6, n.y);
+        ctx.quadraticCurveTo(n.x + len*0.9, n.y + 6, n.x, n.y + 13);
+        ctx.closePath(); ctx.fill();
+        // 內層白焰
+        const g2 = ctx.createLinearGradient(n.x, n.y, n.x + len, n.y);
+        g2.addColorStop(0, 'rgba(255,255,240,0.95)');
+        g2.addColorStop(1, 'rgba(255,210,120,0)');
+        ctx.fillStyle = g2;
+        ctx.beginPath();
+        ctx.moveTo(n.x, n.y - 7);
+        ctx.lineTo(n.x + len, n.y);
+        ctx.lineTo(n.x, n.y + 7);
+        ctx.closePath(); ctx.fill();
+      });
+    }
+
     ctx.drawImage(spr, -bw/2, -bh/2, bw, bh);
     ctx.restore();
     drawBossBar();
