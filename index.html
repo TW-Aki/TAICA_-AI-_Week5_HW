@@ -334,6 +334,9 @@ function spawnGearaDoga(){
 }
 
 // 裘尼砲口（相對於精靈中心，已依 260px 顯示寬換算）
+// 裘尼感應炮：砲口 / 推進器（標定 (7,96)/(261,161)，圖 280x286，顯示高 52）
+const GYF_MUZZLE = { x: -24.2, y: -8.5 };
+const GYF_THRUST = { x: 22.0, y: 3.3 };
 const GY_GUN = { x: -129, y: 7 };
 const GY_SHIELD = [ {x:1,y:30}, {x:-15,y:35}, {x:14,y:54}, {x:-3,y:60} ];
 
@@ -395,7 +398,12 @@ function updateFunnels(dt){
     } else if (f.mode === 'aim'){
       f.timer -= dt;
       if (f.timer <= 0){
-        enemyShootAt(f.x, f.y, player.x, player.y, CFG.enemyBulletSpeed*0.95, f.color, true);
+        // 從感應炮砲口射出
+        const ang0 = Math.atan2(player.y - f.y, player.x - f.x);
+        const rot0 = ang0 + Math.PI;
+        const mx = f.x + Math.cos(rot0)*GYF_MUZZLE.x - Math.sin(rot0)*GYF_MUZZLE.y;
+        const my = f.y + Math.sin(rot0)*GYF_MUZZLE.x + Math.cos(rot0)*GYF_MUZZLE.y;
+        enemyShootAt(mx, my, player.x, player.y, CFG.enemyBulletSpeed*0.95, f.color, true);
         sfx('finshot');
         f.wave++;
         if (f.wave >= 2){
@@ -1992,9 +2000,20 @@ function drawFunnels(){
       ctx.fillStyle = f.color || '#ffd93d';
       ctx.beginPath(); ctx.arc(0,0,22,0,Math.PI*2); ctx.fill();
       ctx.globalAlpha = 1;
-      const ang = Math.atan2((f.vy||0), (f.vx||0));
-      const s2 = 52, sw = s2 * IMG.gyFunnel.naturalWidth / IMG.gyFunnel.naturalHeight;
-      ctx.rotate((isNaN(ang) ? 0 : ang) + Math.PI/2 + Math.sin(f.t*3)*0.12);
+      const tdx = (f.tx !== undefined ? f.tx - f.x : player.x - f.x);
+      const tdy = (f.ty !== undefined ? f.ty - f.y : player.y - f.y);
+      const ang = Math.atan2(tdy, tdx);
+      const s2 = 64, sw = s2 * IMG.gyFunnel.naturalWidth / IMG.gyFunnel.naturalHeight;
+      const rot = (isNaN(ang) ? 0 : ang) + Math.PI + Math.sin(f.t*3)*0.12;
+      ctx.rotate(rot);
+      // 推進火焰（在推進器位置往後噴）
+      const fl = 10 + Math.sin(f.t*22)*3;
+      const tg = ctx.createRadialGradient(GYF_THRUST.x, GYF_THRUST.y, 1, GYF_THRUST.x, GYF_THRUST.y, fl);
+      tg.addColorStop(0, 'rgba(255,240,180,0.95)');
+      tg.addColorStop(0.5, 'rgba(255,180,60,0.55)');
+      tg.addColorStop(1, 'rgba(255,140,40,0)');
+      ctx.fillStyle = tg;
+      ctx.beginPath(); ctx.arc(GYF_THRUST.x, GYF_THRUST.y, fl, 0, Math.PI*2); ctx.fill();
       ctx.drawImage(IMG.gyFunnel, -sw/2, -s2/2, sw, s2);
       ctx.restore();
       continue;
