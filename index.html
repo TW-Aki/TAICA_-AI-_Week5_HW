@@ -2260,11 +2260,11 @@ function drawBoss(){
       const puls = 0.85 + Math.sin(boss.t*7)*0.15;
       AL_JETS.forEach((j, i) => {
         const flick = 0.9 + Math.sin(boss.t*23 + i*1.9)*0.12;
-        const L = Math.max(26, Math.hypot(j.dx, j.dy) * puls * flick);   // 最短 26px，避免短向量看不見
+        const L = Math.max(32, Math.hypot(j.dx, j.dy) * puls * flick);   // 最短 32px
         const a = Math.atan2(j.dy, j.dx);
         const ex = j.x + Math.cos(a)*L, ey = j.y + Math.sin(a)*L;
         const px = -Math.sin(a), py = Math.cos(a);
-        const wid = 4 + L*0.085;
+        const wid = 5 + L*0.095;
         const g = ctx.createLinearGradient(j.x, j.y, ex, ey);
         g.addColorStop(0, 'rgba(255,245,215,0.95)');
         g.addColorStop(0.35, 'rgba(255,190,90,0.8)');
