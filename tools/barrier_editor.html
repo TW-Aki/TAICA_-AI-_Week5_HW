@@ -26,6 +26,14 @@ canvas{cursor:default}
   <div class="row"><span>選取</span><b id="sel">無</b></div>
   <div class="row"><span>角度</span><b id="ang">-</b></div>
   <div class="row"><span>縮放</span><b id="scl">-</b></div>
+  <div class="ctl">
+    <label>縮放 <b id="sclv">-</b></label>
+    <input type="range" id="rngScale" min="0.3" max="2" step="0.02" value="1">
+  </div>
+  <div class="ctl">
+    <label>旋轉 <b id="angv">-</b></label>
+    <input type="range" id="rngAngle" min="-180" max="180" step="1" value="0">
+  </div>
   <button id="btnReset">重設為預設</button>
   <button id="btnCopy">匯出 JSON</button>
   <textarea id="out" readonly></textarea>
@@ -149,6 +157,18 @@ function draw(){
   document.getElementById('sel').textContent = sel>=0 ? ('#'+(sel+1)) : '無';
   document.getElementById('ang').textContent = sel>=0 ? Math.round(fins[sel].ang*180/Math.PI)+'°' : '-';
   document.getElementById('scl').textContent = sel>=0 ? fins[sel].sc.toFixed(2) : '-';
+  if (sel>=0){
+    document.getElementById('rngScale').value = fins[sel].sc;
+    let deg = Math.round(fins[sel].ang*180/Math.PI);
+    while (deg > 180) deg -= 360;
+    while (deg < -180) deg += 360;
+    document.getElementById('rngAngle').value = deg;
+    document.getElementById('sclv').textContent = fins[sel].sc.toFixed(2);
+    document.getElementById('angv').textContent = deg + '°';
+  } else {
+    document.getElementById('sclv').textContent = '-';
+    document.getElementById('angv').textContent = '-';
+  }
 }
 
 function pos(e){
@@ -196,6 +216,16 @@ cv.addEventListener('wheel', e => {
   fins[sel].sc = Math.max(0.25, Math.min(2, fins[sel].sc + (e.deltaY>0 ? -0.05 : 0.05)));
   draw();
 }, {passive:false});
+document.getElementById('rngScale').addEventListener('input', e => {
+  if (sel < 0) return;
+  fins[sel].sc = parseFloat(e.target.value);
+  draw();
+});
+document.getElementById('rngAngle').addEventListener('input', e => {
+  if (sel < 0) return;
+  fins[sel].ang = parseFloat(e.target.value) * Math.PI / 180;
+  draw();
+});
 document.getElementById('btnReset').onclick = () => location.reload();
 document.getElementById('btnCopy').onclick = () => {
   const data = {
