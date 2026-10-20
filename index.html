@@ -432,17 +432,17 @@ const GY_GUN = { x: -129, y: 7 };
 // α・阿吉爾 線控砲莢艙的安裝位置（相對精靈中心，顯示寬 380）
 // 光束護盾佈局（由 barrier_editor 匯出）
 const AL_BARRIER = {
-  faceFront: [false,false,false,false,false],   // 底面 + 四個側面
-  edgeFront: [true,true,true,true, true,true,true,true],  // 底四邊 + 側稜四條
+  faceFront: [false,false,true,true,false],   // 底面 + 四個側面
+  edgeFront: [false,true,true,false, false,false,true,false],  // 底四邊 + 側稜四條
   // 感應炮的 front 存在 fins[i].front
   tri: [{x:-10,y:-34},{x:112,y:10},{x:-10,y:73},{x:-132,y:10}],
   poles: [{x:-10,y:-149}],
   fins: [
-    {x:-17,y:-147,ang:-2.92,sc:0.58,kind:'wide',flip:false},
-    {x:106,y:6,ang:-1.503,sc:0.46,kind:'narrow',flip:false},
-    {x:-1,y:67,ang:0.197,sc:0.8,kind:'wide',flip:false},
-    {x:-130,y:13,ang:1.676,sc:0.46,kind:'narrow',flip:false},
-    {x:-10,y:-39,ang:-1.951,sc:0.48,kind:'wide',flip:true}
+    {x:-17,y:-147,ang:-2.92,sc:0.58,kind:'wide',flip:false,front:false},
+    {x:106,y:6,ang:-1.503,sc:0.46,kind:'narrow',flip:false,front:false},
+    {x:-1,y:67,ang:0.197,sc:0.8,kind:'wide',flip:false,front:true},
+    {x:-130,y:13,ang:1.676,sc:0.46,kind:'narrow',flip:false,front:false},
+    {x:-10,y:-39,ang:-1.951,sc:0.48,kind:'wide',flip:true,front:false}
   ]
 };
 const AL_WIRE_MOUNT = [ {x:-168, y:-19}, {x:165, y:-145} ];
