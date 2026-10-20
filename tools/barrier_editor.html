@@ -20,7 +20,7 @@ canvas{cursor:default}
     <b>感應炮</b>：點選後拖曳移動<br>
     　· 黃色把手拖曳 = 旋轉<br>
     　· 滾輪 = 縮放<br>
-    <b>三角邊界</b>：拖曳 3 個紅點（赤道）<br><b>上下極點</b>：拖曳 2 個藍點<br>
+    <b>正方形底</b>：拖曳 4 個紅點（B1~B4）<br><b>頂點</b>：拖曳藍點 Apex<br>
     <b>空白處點擊</b> = 取消選取
   </div>
   <div class="row"><span>選取</span><b id="sel">無</b></div>
@@ -36,22 +36,22 @@ const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
 const CX = 450, CY = 350;
 
 // 預設：三頂點 + 兩內圈
-// 正三角體（三角雙錐）5 個頂點：3 個赤道 + 上下 2 個極點
+// 四角錐：正方形底 4 點 + 1 個頂點（共 5 個頂點）
 let tri = [
-  {x: CX,     y: CY-120},   // 赤道 V1（上）
-  {x: CX+150, y: CY+95},    // 赤道 V2（右下）
-  {x: CX-150, y: CY+95}     // 赤道 V3（左下）
+  {x: CX,     y: CY-95},    // 底 B1（後）
+  {x: CX+150, y: CY+10},    // 底 B2（右）
+  {x: CX,     y: CY+120},   // 底 B3（前）
+  {x: CX-150, y: CY+10}     // 底 B4（左）
 ];
 let poles = [
-  {x: CX, y: CY-235},       // 上極點
-  {x: CX, y: CY+205}        // 下極點
+  {x: CX, y: CY-235}        // 頂點 Apex
 ];
 let fins = [
-  {x: CX,     y: CY-120, ang: -Math.PI/2,        sc: 0.85},
-  {x: CX+150, y: CY+95,  ang:  Math.PI/6,        sc: 0.85},
-  {x: CX-150, y: CY+95,  ang:  Math.PI*5/6,      sc: 0.85},
-  {x: CX,     y: CY-235, ang: -Math.PI/2,        sc: 0.62},
-  {x: CX,     y: CY+205, ang:  Math.PI/2,        sc: 0.62}
+  {x: CX,     y: CY-95,  ang: -Math.PI/2,   sc: 0.8},
+  {x: CX+150, y: CY+10,  ang:  0,           sc: 0.8},
+  {x: CX,     y: CY+120, ang:  Math.PI/2,   sc: 0.8},
+  {x: CX-150, y: CY+10,  ang:  Math.PI,     sc: 0.8},
+  {x: CX,     y: CY-235, ang: -Math.PI/2,   sc: 0.62}
 ];
 
 let sel = -1, drag = null;  // {type:'fin'|'tri', i, mode:'move'|'rot'}
@@ -69,12 +69,13 @@ function draw(){
   g.addColorStop(0.7,'rgba(255,110,200,0.12)');
   g.addColorStop(1,'rgba(255,90,190,0)');
   ctx.beginPath();
-  ctx.moveTo(tri[0].x,tri[0].y); ctx.lineTo(tri[1].x,tri[1].y); ctx.lineTo(tri[2].x,tri[2].y);
+  ctx.moveTo(tri[0].x,tri[0].y);
+  for (let i=1;i<tri.length;i++) ctx.lineTo(tri[i].x,tri[i].y);
   ctx.closePath(); ctx.fillStyle = g; ctx.fill();
 
-  // 三角光束邊
-  for (let k=0;k<3;k++){
-    const a = tri[k], b = tri[(k+1)%3];
+  // 底部光束邊（正方形四邊）
+  for (let k=0;k<tri.length;k++){
+    const a = tri[k], b = tri[(k+1)%tri.length];
     ctx.strokeStyle = 'rgba(255,190,235,0.9)';
     ctx.lineWidth = 9; ctx.shadowColor = '#ff7ad9'; ctx.shadowBlur = 18;
     ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
@@ -113,7 +114,7 @@ function draw(){
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(p.x,p.y,9,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle = '#4fb8ff'; ctx.font = 'bold 12px system-ui';
-    ctx.fillText(i===0?'P1 上':'P2 下', p.x+12, p.y-10);
+    ctx.fillText('Apex 頂點', p.x+12, p.y-10);
     // 連到赤道三點（立體感）
     tri.forEach(q => {
       ctx.strokeStyle = 'rgba(120,200,255,0.18)'; ctx.lineWidth = 1;
@@ -128,7 +129,7 @@ function draw(){
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(p.x,p.y,9,0,Math.PI*2); ctx.stroke();
     ctx.fillStyle = '#ff6b6b'; ctx.font = 'bold 12px system-ui';
-    ctx.fillText('V'+(i+1), p.x+12, p.y-10);
+    ctx.fillText('B'+(i+1), p.x+12, p.y-10);
   });
 
   // 中心十字
@@ -148,7 +149,7 @@ function pos(e){
 cv.addEventListener('mousedown', e => {
   const p = pos(e);
   // 三角頂點優先
-  for (let i=0;i<3;i++){
+  for (let i=0;i<tri.length;i++){
     if (Math.hypot(tri[i].x-p.x, tri[i].y-p.y) < 16){ drag={type:'tri', i}; return; }
   }
   for (let i=0;i<poles.length;i++){
