@@ -170,6 +170,7 @@ let barrierFins = [];
 let atkFins = [];
 let duelPending = 0;
 let duelFx = [];
+let DEMO = false;
 let megaArms = [];
 let prevLevel = 0;
 let endingShown = false;
@@ -740,6 +741,10 @@ function fanShot(sx, sy, count, spread, speed){
 
 /* ============ 更新 ============ */
 function update(dt){
+  if (DEMO){
+    keys['Space'] = true;
+    if (Math.floor(gameTime * 2) % 9 === 0) keys['KeyE_pressed'] = true;
+  }
   gameTime += dt;
   stateTime += dt;
 
@@ -2797,6 +2802,12 @@ if (location.hash.startsWith('#phase=')){
     barrierFins = [0,1,2].map(i => ({ ang: -Math.PI/2 + i*Math.PI*2/3, volley: 0, fireT: 0.35 }));
     enemyShootAt(1500, 400, 500, 540, 300);
     enemyShootAt(1500, 700, 500, 500, 300);
+  }
+  if (ph === 'demo'){
+    state = STATE.NAV;
+    godMode = true;
+    playerLevel = 3;
+    DEMO = true;
   }
   if (ph === 'mobs'){
     state = STATE.WAVE; waveTimer = 25;
