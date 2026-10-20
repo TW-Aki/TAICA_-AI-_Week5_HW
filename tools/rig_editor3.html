@@ -33,7 +33,7 @@ button:hover{background:#24405c}
     <div class="row"><label>旋轉</label><input type="range" id="prot" min="-180" max="180" step="1"><input type="number" id="protn" step="1" style="width:56px"></div>
   </div>
   <div id="actions"><button id="btnExport">匯出 JSON</button><button id="btnRef">參考圖</button></div>
-  <div id="actions" style="border-top:none;padding-top:0"><button id="btnLoad">載入 JSON</button></div>
+  <div id="actions" style="border-top:none;padding-top:0"><button id="btnLoad">載入 JSON</button><button id="btnMirror">鏡像：開</button></div>
   <textarea id="inp" placeholder="貼上 placements JSON 後按載入" style="width:100%;height:80px;margin-top:6px;background:#0c121b;color:#9fd0f0;border:1px solid #22303f;border-radius:5px;padding:6px;font-family:monospace;font-size:10px;display:none"></textarea>
   <textarea id="out" readonly></textarea>
 </div>
@@ -48,6 +48,7 @@ cv.width=W*ZOOM;cv.height=CH*ZOOM;
 let parts=INIT.map(p=>({...p,flip:false,rot:0,visible:true}));
 let sel=parts[0];
 let showRef=false;
+let MIRROR=true;   // 與遊戲畫面一致（遊戲會水平翻轉）
 const imgs={};
 const refImg=new Image();refImg.src=REF;
 
@@ -55,7 +56,10 @@ function loadAll(done){let n=0;const keys=Object.keys(IMGS);
  keys.forEach(k=>{const im=new Image();im.onload=()=>{if(++n===keys.length)done()};im.onerror=()=>{if(++n===keys.length)done()};im.src=IMGS[k];imgs[k]=im;});}
 
 function draw(){
+ ctx.setTransform(1,0,0,1,0,0);
+ ctx.clearRect(0,0,cv.width,cv.height);
  ctx.fillStyle='#0e141d';ctx.fillRect(0,0,cv.width,cv.height);
+ if (MIRROR){ ctx.translate(cv.width,0); ctx.scale(-1,1); }
  // 組裝區格線
  ctx.strokeStyle='rgba(60,90,120,0.16)';ctx.lineWidth=1;
  for(let x=0;x<=W;x+=40){ctx.beginPath();ctx.moveTo(x*ZOOM,0);ctx.lineTo(x*ZOOM,H*ZOOM);ctx.stroke();}
@@ -76,7 +80,7 @@ function draw(){
    ctx.strokeStyle='#4fb8ff';ctx.lineWidth=1.4;ctx.setLineDash([6,4]);ctx.strokeRect(-w/2,-h/2,w,h);ctx.restore();}
  }
 }
-function toCanvas(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)/ZOOM,y:(e.clientY-r.top)/ZOOM};}
+function toCanvas(e){const r=cv.getBoundingClientRect();let x=(e.clientX-r.left)/ZOOM;const y=(e.clientY-r.top)/ZOOM;if(MIRROR)x=W-x;return{x,y};}
 function pick(pt){for(let i=parts.length-1;i>=0;i--){const p=parts[i];if(!p.visible)continue;const im=imgs[p.i];if(!im||!im.naturalWidth)continue;
  const dx=pt.x-p.x,dy=pt.y-p.y,a=-p.rot*Math.PI/180;
  const lx=dx*Math.cos(a)-dy*Math.sin(a),ly=dx*Math.sin(a)+dy*Math.cos(a);
@@ -113,6 +117,11 @@ document.getElementById('psc').addEventListener('input',e=>{sel.sc=parseFloat(e.
 document.getElementById('pscn').addEventListener('input',e=>{sel.sc=parseFloat(e.target.value)||0.4;document.getElementById('psc').value=sel.sc;draw();});
 document.getElementById('prot').addEventListener('input',e=>{sel.rot=parseFloat(e.target.value);document.getElementById('protn').value=sel.rot;draw();});
 document.getElementById('protn').addEventListener('input',e=>{sel.rot=parseFloat(e.target.value)||0;document.getElementById('prot').value=sel.rot;draw();});
+document.getElementById('btnMirror').onclick=e=>{
+  MIRROR=!MIRROR;
+  e.target.textContent = MIRROR ? '鏡像：開' : '鏡像：關';
+  draw();
+};
 document.getElementById('btnRef').onclick=e=>{showRef=!showRef;e.target.textContent=showRef?'隱藏參考':'參考圖';draw();};
 document.getElementById('btnLoad').onclick=()=>{
   const ta=document.getElementById('inp');
