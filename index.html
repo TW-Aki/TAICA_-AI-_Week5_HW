@@ -348,6 +348,8 @@ const GYF_THRUST = { x: 22.0, y: 3.3 };
 const GY_GUN = { x: -129, y: 7 };
 // α・阿吉爾 線控砲莢艙的安裝位置（相對精靈中心，顯示寬 380）
 const AL_WIRE_MOUNT = [ {x:-168, y:-19}, {x:165, y:-145} ];
+// α メガ粒子砲 發射口（相對精靈中心，顯示寬 380）
+const AL_BEAM_NOZ = [ {x:-93.8, y:-50.0}, {x:-79.0, y:-69.7} ];
 // 裘尼推進器噴口（相對精靈中心，顯示寬 260）
 const GY_THRUST = [ {x:68.0,y:-46.0}, {x:101.1,y:3.2}, {x:116.2,y:-14.4} ];
 const GY_SHIELD = [ {x:1,y:30}, {x:-15,y:35}, {x:14,y:54}, {x:-3,y:60} ];
@@ -1866,14 +1868,25 @@ function drawMegaBeam(){
     ctx.beginPath(); ctx.moveTo(0, top); ctx.lineTo(W, top); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(0, bot); ctx.lineTo(W, bot); ctx.stroke();
     ctx.setLineDash([]);
-    // 砲口集氣
-    const cr = 26 + (1.4 - b.timer) * 26;
-    const cg = ctx.createRadialGradient(boss.x - 80, b.y, 4, boss.x - 80, b.y, cr);
-    cg.addColorStop(0, 'rgba(255,255,255,0.95)');
-    cg.addColorStop(0.5, 'rgba(255,90,150,0.7)');
-    cg.addColorStop(1, 'rgba(255,60,120,0)');
-    ctx.fillStyle = cg;
-    ctx.beginPath(); ctx.arc(boss.x - 80, b.y, cr, 0, Math.PI*2); ctx.fill();
+    // 砲口集氣（依標定的發射口）
+    const cr = 20 + (1.4 - b.timer) * 30;
+    const midY = boss.y + (AL_BEAM_NOZ[0].y + AL_BEAM_NOZ[1].y)/2;
+    AL_BEAM_NOZ.forEach((nz, i) => {
+      const nx = boss.x + nz.x, ny = boss.y + nz.y;
+      const cg = ctx.createRadialGradient(nx, ny, 3, nx, ny, cr);
+      cg.addColorStop(0, 'rgba(255,255,255,0.95)');
+      cg.addColorStop(0.45, 'rgba(255,90,150,0.7)');
+      cg.addColorStop(1, 'rgba(255,60,120,0)');
+      ctx.fillStyle = cg;
+      ctx.beginPath(); ctx.arc(nx, ny, cr, 0, Math.PI*2); ctx.fill();
+    });
+    // 兩口之間的連線光
+    ctx.strokeStyle = `rgba(255,140,190,${0.35 + 0.3*Math.abs(Math.sin(b.timer*10))})`;
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(boss.x + AL_BEAM_NOZ[0].x, boss.y + AL_BEAM_NOZ[0].y);
+    ctx.lineTo(boss.x + AL_BEAM_NOZ[1].x, boss.y + AL_BEAM_NOZ[1].y);
+    ctx.stroke();
     ctx.textAlign = 'center';
     ctx.fillStyle = 'rgba(255,140,170,0.95)';
     ctx.font = '700 34px system-ui, sans-serif';
