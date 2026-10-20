@@ -2253,35 +2253,36 @@ function drawBoss(){
     const sprA = (armsOut && IMG.alphaNoPod && IMG.alphaNoPod.complete) ? IMG.alphaNoPod : IMG.alpha;
     const bw = 380, bh = bw * sprA.naturalHeight / sprA.naturalWidth;
     if (boss.dead) ctx.globalAlpha = Math.max(0, boss.deathTimer / 1.2);
-    // 推進火焰（依標定的向量繪製）
+    ctx.drawImage(sprA, -bw/2, -bh/2, bw, bh);
+
+    // 推進火焰（畫在機體上層，硬邊造型）
     if (!boss.dead){
       const puls = 0.85 + Math.sin(boss.t*7)*0.15;
       AL_JETS.forEach((j, i) => {
         const flick = 0.9 + Math.sin(boss.t*23 + i*1.9)*0.12;
         const L = Math.hypot(j.dx, j.dy) * puls * flick;
         const a = Math.atan2(j.dy, j.dx);
-        const rad = 3.5 + L*0.09;
-        for (let k=0;k<4;k++){
-          const t = k/3;
-          const cx2 = j.x + Math.cos(a)*L*t;
-          const cy2 = j.y + Math.sin(a)*L*t;
-          const r = rad * (1 - t*0.72);
-          const g = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, r);
-          const al = 0.5 * (1 - t*0.55);
-          g.addColorStop(0, `rgba(255,${245 - t*70},${200 - t*130},${al})`);
-          g.addColorStop(1, 'rgba(255,110,40,0)');
-          ctx.fillStyle = g;
-          ctx.beginPath(); ctx.arc(cx2, cy2, r, 0, Math.PI*2); ctx.fill();
-        }
-        // 噴口亮點
-        const cg2 = ctx.createRadialGradient(j.x, j.y, 0, j.x, j.y, rad*1.2);
-        cg2.addColorStop(0, 'rgba(255,255,240,0.95)');
-        cg2.addColorStop(1, 'rgba(255,200,110,0)');
-        ctx.fillStyle = cg2;
-        ctx.beginPath(); ctx.arc(j.x, j.y, rad*1.2, 0, Math.PI*2); ctx.fill();
+        const ex = j.x + Math.cos(a)*L, ey = j.y + Math.sin(a)*L;
+        const px = -Math.sin(a), py = Math.cos(a);
+        const wid = 4 + L*0.085;
+        const g = ctx.createLinearGradient(j.x, j.y, ex, ey);
+        g.addColorStop(0, 'rgba(255,245,215,0.95)');
+        g.addColorStop(0.35, 'rgba(255,190,90,0.8)');
+        g.addColorStop(0.75, 'rgba(255,130,50,0.45)');
+        g.addColorStop(1, 'rgba(255,90,30,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(j.x + px*wid, j.y + py*wid);
+        ctx.lineTo(j.x + j.dx*0.35 + px*wid*0.55, j.y + j.dy*0.35 + py*wid*0.55);
+        ctx.lineTo(ex, ey);
+        ctx.lineTo(j.x + j.dx*0.35 - px*wid*0.55, j.y + j.dy*0.35 - py*wid*0.55);
+        ctx.lineTo(j.x - px*wid, j.y - py*wid);
+        ctx.closePath(); ctx.fill();
+        // 噴口白點
+        ctx.fillStyle = 'rgba(255,255,245,0.9)';
+        ctx.beginPath(); ctx.arc(j.x, j.y, wid*0.9, 0, Math.PI*2); ctx.fill();
       });
     }
-
     ctx.drawImage(sprA, -bw/2, -bh/2, bw, bh);
     ctx.restore();
     drawWirePods();          // 纜線與莢艙蓋在機體上方
