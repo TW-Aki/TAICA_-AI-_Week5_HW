@@ -133,7 +133,7 @@ function pick(pt){for(let i=parts.length-1;i>=0;i--){const p=parts[i];if(!p.visi
 
 let dragging=false,off={x:0,y:0};
 cv.addEventListener('mousedown',e=>{const pt=toCanvas(e);const hit=pick(pt);
- if(hit){sel=hit;parts.splice(parts.indexOf(hit),1);parts.push(hit);dragging=true;off={x:pt.x-hit.x,y:pt.y-hit.y};cv.classList.add('dragging');syncUI();draw();}});
+ if(hit){sel=hit;dragging=true;off={x:pt.x-hit.x,y:pt.y-hit.y};cv.classList.add('dragging');syncUI();draw();}});
 window.addEventListener('mousemove',e=>{if(!dragging||!sel)return;const pt=toCanvas(e);sel.x=Math.round(pt.x-off.x);sel.y=Math.round(pt.y-off.y);syncProps();draw();});
 window.addEventListener('mouseup',()=>{dragging=false;cv.classList.remove('dragging');syncUI();});
 cv.addEventListener('wheel',e=>{if(!sel)return;e.preventDefault();sel.sc=Math.max(0.05,Math.min(1.2,sel.sc*(e.deltaY<0?1.06:0.94)));syncProps();draw();},{passive:false});
