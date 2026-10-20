@@ -2288,13 +2288,13 @@ function drawBoss(){
 
     // 衝撞時轉向玩家，結束後緩慢轉回
     if (boss.tilt === undefined) boss.tilt = 0;
-    if (boss.chargeState){
+    if (boss.chargeState === 'wind'){
       const tgt = Math.atan2(player.y - boss.y, player.x - boss.x) + Math.PI;
       let d = tgt - boss.tilt;
       while (d > Math.PI) d -= Math.PI*2;
       while (d < -Math.PI) d += Math.PI*2;
       boss.tilt += d * 0.16;
-    } else if (Math.abs(boss.tilt) > 0.005){
+    } else if (!boss.chargeState && Math.abs(boss.tilt) > 0.005){
       boss.tilt *= 0.88;
       if (Math.abs(boss.tilt) <= 0.005) boss.tilt = 0;
     }
