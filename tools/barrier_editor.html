@@ -35,16 +35,8 @@ canvas{cursor:default}
     <label>旋轉 <b id="angv">-</b></label>
     <input type="range" id="rngAngle" min="-180" max="180" step="1" value="0">
   </div>
-  <div class="row" style="margin-top:12px"><span>面 圖層</span>
-    <select id="selFace" style="background:#1b2a3c;color:#ffb8ea;border:1px solid #55305a;border-radius:4px;padding:3px">
-      <option value="behind">機體後面</option><option value="front">機體上面</option>
-    </select>
-  </div>
-  <div class="row"><span>邊 圖層</span>
-    <select id="selEdge" style="background:#1b2a3c;color:#ffb8ea;border:1px solid #55305a;border-radius:4px;padding:3px">
-      <option value="behind">機體後面</option><option value="front" selected>機體上面</option>
-    </select>
-  </div>
+  <div style="margin-top:14px;color:#c8a8d8;font-size:12px">圖層順序（上＝最上層）</div>
+  <div id="orderList" style="margin-top:6px"></div>
   <button id="btnFlip">鏡像（左右翻轉）</button>
   <button id="btnReset">重設為預設</button>
   <button id="btnCopy">匯出 JSON</button>
@@ -74,6 +66,29 @@ let fins = [
   {x: CX-150, y: CY+10,  ang:  Math.PI,     sc: 0.9,  kind:'narrow'},
   {x: CX,     y: CY-235, ang: -Math.PI/2,   sc: 0.62, kind:'wide'}
 ];
+
+let order = ['face','mech','edge','fins'];   // 由下到上
+const LABELS = { face:'錐面（粉色）', edge:'邊線', mech:'機體', fins:'感應炮' };
+
+function renderOrder(){
+  const box = document.getElementById('orderList');
+  box.innerHTML = '';
+  [...order].reverse().forEach((el) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px';
+    const name = document.createElement('div');
+    name.textContent = LABELS[el];
+    name.style.cssText = 'flex:1;color:#ffb8ea';
+    const up = document.createElement('button');
+    up.textContent = '▲'; up.style.cssText = 'width:26px;height:24px;margin:0;padding:0;font-size:11px';
+    up.onclick = () => { const i = order.indexOf(el); if (i < order.length-1){ [order[i],order[i+1]]=[order[i+1],order[i]]; renderOrder(); } };
+    const dn = document.createElement('button');
+    dn.textContent = '▼'; dn.style.cssText = 'width:26px;height:24px;margin:0;padding:0;font-size:11px';
+    dn.onclick = () => { const i = order.indexOf(el); if (i > 0){ [order[i],order[i-1]]=[order[i-1],order[i]]; renderOrder(); } };
+    row.append(name, up, dn);
+    box.appendChild(row);
+  });
+}
 
 let sel = -1, drag = null;  // {type:'fin'|'tri', i, mode:'move'|'rot'}
 
@@ -248,7 +263,7 @@ document.getElementById('btnFlip').onclick = () => {
 document.getElementById('btnReset').onclick = () => location.reload();
 document.getElementById('btnCopy').onclick = () => {
   const data = {
-    layer: { face: document.getElementById('selFace').value, edge: document.getElementById('selEdge').value },
+    order: order,
     tri: tri.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
     poles: poles.map(p => ({x: Math.round(p.x-CX), y: Math.round(p.y-CY)})),
     fins: fins.map(f => ({x: Math.round(f.x-CX), y: Math.round(f.y-CY), ang: +(f.ang).toFixed(3), sc: +f.sc.toFixed(2), kind: f.kind, flip: !!f.flip}))
@@ -257,5 +272,6 @@ document.getElementById('btnCopy').onclick = () => {
   ta.value = JSON.stringify(data);
   ta.select(); try{ document.execCommand('copy'); }catch(err){}
 };
+renderOrder();
 draw();
 </script></body></html>
