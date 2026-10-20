@@ -1555,15 +1555,17 @@ function updateBoss2(dt){
     if (boss.fireTimer <= 0 && !boss.beamState){
       const p = boss.phase;
       const spd = CFG.enemyBulletSpeed * (0.55 + (p-1)*0.05);
+      const muzzleX = boss.x + AL_BEAM_NOZ[0].x;
+      const muzzleY = boss.y + AL_BEAM_NOZ[0].y;
       if (p === 1){
-        fanShot(boss.x - 60, boss.y, 5, Math.PI*0.42, spd);
+        fanShot(muzzleX, muzzleY, 5, Math.PI*0.42, spd);
       } else if (p === 2){
-        fanShot(boss.x - 60, boss.y, 7, Math.PI*0.55, spd);
+        fanShot(muzzleX, muzzleY, 7, Math.PI*0.55, spd);
       } else {
-        fanShot(boss.x - 60, boss.y, 7, Math.PI*0.55, spd);
+        fanShot(muzzleX, muzzleY, 7, Math.PI*0.55, spd);
         setTimeout(()=>{
           if (state !== STATE.BOSS2 || !boss || boss.dead) return;
-          fanShot(boss.x - 60, boss.y, 7, Math.PI*0.55, spd*0.92);
+          fanShot(boss.x + AL_BEAM_NOZ[0].x, boss.y + AL_BEAM_NOZ[0].y, 7, Math.PI*0.55, spd*0.92);
         }, 260);
       }
       boss.fireTimer = p === 1 ? 1.75 : (p === 2 ? 1.5 : 1.25);
