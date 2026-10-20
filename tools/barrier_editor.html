@@ -27,14 +27,7 @@ canvas{cursor:default}
   <div class="row"><span>角度</span><b id="ang">-</b></div>
   <div class="row"><span>縮放</span><b id="scl">-</b></div>
   <div class="row"><span>鏡像</span><b id="flp">-</b></div>
-  <div class="ctl">
-    <label>縮放 <b id="sclv">-</b></label>
-    <input type="range" id="rngScale" min="0.3" max="2" step="0.02" value="1">
-  </div>
-  <div class="ctl">
-    <label>旋轉 <b id="angv">-</b></label>
-    <input type="range" id="rngAngle" min="-180" max="180" step="1" value="0">
-  </div>
+  <div class="locked">🔒 位置／旋轉／縮放已鎖定<br>只能調整圖層順序</div>
   <div style="margin-top:14px;color:#c8a8d8;font-size:12px">圖層順序（上＝最上層）</div>
   <div id="orderList" style="margin-top:6px"></div>
   <button id="btnFlip">鏡像（左右翻轉）</button>
@@ -72,24 +65,32 @@ const LABELS = { face:'錐面（粉色）', edge:'邊線', mech:'機體', fins:'
 
 function renderOrder(){
   const box = document.getElementById('orderList');
-  box.innerHTML = '';
-  [...order].reverse().forEach((el) => {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:4px;font-size:12px';
-    const name = document.createElement('div');
-    name.textContent = LABELS[el];
-    name.style.cssText = 'flex:1;color:#ffb8ea';
-    const up = document.createElement('button');
-    up.textContent = '▲'; up.style.cssText = 'width:26px;height:24px;margin:0;padding:0;font-size:11px';
-    up.onclick = () => { const i = order.indexOf(el); if (i < order.length-1){ [order[i],order[i+1]]=[order[i+1],order[i]]; renderOrder(); } };
-    const dn = document.createElement('button');
-    dn.textContent = '▼'; dn.style.cssText = 'width:26px;height:24px;margin:0;padding:0;font-size:11px';
-    dn.onclick = () => { const i = order.indexOf(el); if (i > 0){ [order[i],order[i-1]]=[order[i-1],order[i]]; renderOrder(); } };
-    row.append(name, up, dn);
-    box.appendChild(row);
+  if (!box) return;
+  const top = [...order].reverse();
+  let html = '';
+  top.forEach((el, idx) => {
+    const real = order.length - 1 - idx;   // 在 order 中的索引
+    html += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">'
+         +  '<div style="flex:1;font-size:12px;color:#ffb8ea">' + (LABELS[el]||el) + '</div>'
+         +  '<button data-act="up" data-i="' + real + '" style="width:30px;height:26px;padding:0;margin:0;font-size:11px">▲</button>'
+         +  '<button data-act="dn" data-i="' + real + '" style="width:30px;height:26px;padding:0;margin:0;font-size:11px">▼</button>'
+         +  '</div>';
+  });
+  box.innerHTML = html;
+  box.querySelectorAll('button').forEach(b => {
+    b.onclick = () => {
+      const i = parseInt(b.dataset.i, 10);
+      if (b.dataset.act === 'up' && i < order.length-1){
+        [order[i], order[i+1]] = [order[i+1], order[i]];
+      } else if (b.dataset.act === 'dn' && i > 0){
+        [order[i], order[i-1]] = [order[i-1], order[i]];
+      }
+      renderOrder();
+    };
   });
 }
 
+const LOCKED = true;   // 位置/角度/縮放已鎖定
 let sel = -1, drag = null;  // {type:'fin'|'tri', i, mode:'move'|'rot'}
 
 function draw(){
@@ -187,16 +188,10 @@ function draw(){
   document.getElementById('scl').textContent = sel>=0 ? fins[sel].sc.toFixed(2) : '-';
   document.getElementById('flp').textContent = sel>=0 ? (fins[sel].flip ? '開' : '關') : '-';
   if (sel>=0){
-    document.getElementById('rngScale').value = fins[sel].sc;
     let deg = Math.round(fins[sel].ang*180/Math.PI);
     while (deg > 180) deg -= 360;
     while (deg < -180) deg += 360;
-    document.getElementById('rngAngle').value = deg;
-    document.getElementById('sclv').textContent = fins[sel].sc.toFixed(2);
-    document.getElementById('angv').textContent = deg + '°';
-  } else {
-    document.getElementById('sclv').textContent = '-';
-    document.getElementById('angv').textContent = '-';
+
   }
 }
 
@@ -205,6 +200,7 @@ function pos(e){
   return { x: (e.clientX-r.left) * cv.width/r.width, y: (e.clientY-r.top) * cv.height/r.height };
 }
 cv.addEventListener('mousedown', e => {
+  if (LOCKED) return;
   const p = pos(e);
   // 三角頂點優先
   for (let i=0;i<tri.length;i++){
@@ -245,16 +241,6 @@ cv.addEventListener('wheel', e => {
   fins[sel].sc = Math.max(0.25, Math.min(2, fins[sel].sc + (e.deltaY>0 ? -0.05 : 0.05)));
   draw();
 }, {passive:false});
-document.getElementById('rngScale').addEventListener('input', e => {
-  if (sel < 0) return;
-  fins[sel].sc = parseFloat(e.target.value);
-  draw();
-});
-document.getElementById('rngAngle').addEventListener('input', e => {
-  if (sel < 0) return;
-  fins[sel].ang = parseFloat(e.target.value) * Math.PI / 180;
-  draw();
-});
 document.getElementById('btnFlip').onclick = () => {
   if (sel < 0) return;
   fins[sel].flip = !fins[sel].flip;
