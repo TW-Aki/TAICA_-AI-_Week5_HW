@@ -1,7 +1,4 @@
-# 開發暫存
+_*.js
+_check*.js
 preview/
-_check.js
-*.log
-
-# 測試截圖（精選的已放在 screenshots/）
-shot_*.png
+*.bak
