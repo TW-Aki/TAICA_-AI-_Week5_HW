@@ -21,7 +21,7 @@
   #touchUI button:active{background:rgba(60,130,190,0.85);transform:scale(0.96)}
   #touchUI button .sub{font-size:9px;font-weight:400;opacity:0.7}
   #touchUI button:disabled{opacity:0.3}
-  #btnPause{position:fixed;top:14px;right:14px;width:46px;height:46px;border-radius:12px;
+  #btnPause{position:fixed;top:12px;right:14px;width:40px;height:40px;border-radius:11px;
     background:rgba(18,32,48,0.72);border:1px solid rgba(120,200,255,0.5);color:#cfe9ff;
     font-size:16px;z-index:12;cursor:pointer;backdrop-filter:blur(6px);display:none}
   #btnPause.on{display:block}
@@ -2612,36 +2612,63 @@ function drawBoss(){
 function drawBossBar(){
   if (!boss || boss.dead) return;
 
-    const bw = 900, bx = (W-bw)/2, by = 64;
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
-    ctx.fillRect(bx-4, by-4, bw+8, 30);
-    ctx.fillStyle = '#2a1220';
-    ctx.fillRect(bx, by, bw, 22);
-    const ratio = Math.max(0, boss.hp / boss.maxHp);
-    const hg = ctx.createLinearGradient(bx,0,bx+bw,0);
-    hg.addColorStop(0, '#ff3b3b'); hg.addColorStop(1, '#ff9f43');
-    ctx.fillStyle = hg;
-    ctx.fillRect(bx, by, bw*ratio, 22);
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 2;
-    ctx.strokeRect(bx, by, bw, 22);
-    // 階段分隔線
-    ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 3;
-    [0.6, 0.3].forEach(r => {
-      ctx.beginPath(); ctx.moveTo(bx + bw*r, by); ctx.lineTo(bx + bw*r, by+22); ctx.stroke();
-    });
-    // 目前階段
-    ctx.textAlign = 'right';
-    ctx.fillStyle = '#ffd93d';
-    ctx.font = '700 22px system-ui, sans-serif';
-    ctx.fillText(`PHASE ${boss.phase} / 3`, bx + bw, by + 48);
-    ctx.textAlign = 'center';
-    ctx.fillStyle = '#fff';
-    ctx.font = '600 22px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    const BOSS_LABEL = { jagd:'裘尼（ヤクト・ドーガ）', alpha:'α・阿吉爾', sazabi:'沙薩比（夏亞）' };
-    ctx.fillText(BOSS_LABEL[boss.type] || '', W/2, by - 14);
-}
+  const bw = 760, bx = (W-bw)/2, by = 58;
+  const BOSS_LABEL = { jagd:'裘尼（ヤクト・ドーガ）', alpha:'α・阿吉爾', sazabi:'沙薩比（夏亞）' };
 
+  // 名稱（條上方）
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#ffd9a0';
+  ctx.font = '700 24px system-ui, sans-serif';
+  ctx.fillText(BOSS_LABEL[boss.type] || '', W/2, by - 18);
+
+  // 條底
+  ctx.fillStyle = 'rgba(0,0,0,0.62)';
+  roundRect(bx-6, by-6, bw+12, 40, 10); ctx.fill();
+  ctx.fillStyle = '#2a1220';
+  roundRect(bx, by, bw, 28, 8); ctx.fill();
+
+  const ratio = Math.max(0, boss.hp / boss.maxHp);
+  const hg = ctx.createLinearGradient(bx,0,bx+bw,0);
+  hg.addColorStop(0, '#ff3b3b'); hg.addColorStop(1, '#ff9f43');
+  ctx.fillStyle = hg;
+  roundRect(bx, by, Math.max(2, bw*ratio), 28, 8); ctx.fill();
+
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2;
+  roundRect(bx, by, bw, 28, 8); ctx.stroke();
+
+  // 階段分隔
+  ctx.strokeStyle = 'rgba(0,0,0,0.75)'; ctx.lineWidth = 3;
+  [0.6, 0.3].forEach(r => {
+    ctx.beginPath(); ctx.moveTo(bx + bw*r, by+2); ctx.lineTo(bx + bw*r, by+26); ctx.stroke();
+  });
+
+  // 血量數字
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fff';
+  ctx.font = '700 17px system-ui, sans-serif';
+  ctx.fillText(`${Math.ceil(boss.hp)} / ${boss.maxHp}`, W/2, by + 21);
+
+  // 階段（條下方）
+  ctx.fillStyle = '#ffd93d';
+  ctx.font = '700 16px system-ui, sans-serif';
+  ctx.fillText(`PHASE ${boss.phase} / 3`, W/2, by + 62);
+
+  // BOSS 頭像（右上）
+  const ix = W - 156, iy = 62, isz = 96;
+  roundRect(ix, iy, isz, isz, 16);
+  ctx.fillStyle = 'rgba(24,8,14,0.82)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(255,120,140,0.75)'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.save();
+  roundRect(ix+4, iy+4, isz-8, isz-8, 12);
+  ctx.clip();
+  const bImg = boss.type === 'alpha' ? IMG.alpha : (boss.type === 'sazabi' ? IMG.sazabi : IMG.gyunei);
+  if (bImg && bImg.complete && bImg.naturalWidth){
+    const ih = isz*1.5, iw = ih * bImg.naturalWidth / bImg.naturalHeight;
+    ctx.drawImage(bImg, ix + isz/2 - iw/2, iy + isz/2 - ih/2, iw, ih);
+  }
+  ctx.restore();
+  ctx.textAlign = 'left';
+}
 
 function drawBullets(){
   // 玩家光束
@@ -2973,7 +3000,7 @@ function glyphDrones(cx, cy, s, color){
 }
 
 function drawIconSlot(x, y, size, opts){
-  const { color, active, ready, cdRatio, cdText, keyLabel, name, glyph } = opts;
+  const { color, active, ready, cdRatio, cdText, keyLabel, name, glyph, compact } = opts;
   ctx.save();
   roundRectPath(x, y, size, size, 14);
   ctx.fillStyle = active ? 'rgba(255,255,255,0.14)' : 'rgba(10,16,26,0.72)';
@@ -3003,13 +3030,24 @@ function drawIconSlot(x, y, size, opts){
     }
   }
 
-  ctx.textAlign = 'center';
-  ctx.fillStyle = ready || active ? '#cfe0f0' : '#5b6b7a';
-  ctx.font = '500 15px system-ui, sans-serif';
-  ctx.fillText(name, x + size/2, y + size + 20);
-  ctx.fillStyle = ready || active ? color : '#3f4b57';
-  ctx.font = '700 13px system-ui, sans-serif';
-  ctx.fillText(keyLabel, x + size/2, y + size + 38);
+  if (compact){
+    // 左側欄：名稱與按鍵放在圖示右邊
+    ctx.textAlign = 'left';
+    ctx.fillStyle = ready || active ? '#cfe0f0' : '#5b6b7a';
+    ctx.font = '600 17px system-ui, sans-serif';
+    ctx.fillText(name, x + size + 14, y + size/2 - 2);
+    ctx.fillStyle = ready || active ? color : '#3f4b57';
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.fillText(keyLabel, x + size + 14, y + size/2 + 20);
+  } else {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = ready || active ? '#cfe0f0' : '#5b6b7a';
+    ctx.font = '500 15px system-ui, sans-serif';
+    ctx.fillText(name, x + size/2, y + size + 20);
+    ctx.fillStyle = ready || active ? color : '#3f4b57';
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.fillText(keyLabel, x + size/2, y + size + 38);
+  }
   ctx.restore();
 }
 
@@ -3017,68 +3055,100 @@ function drawHUD(){
   if ([STATE.TITLE, STATE.WIN, STATE.LOSE].includes(state)) return;
   ctx.textAlign = 'left';
 
-  // 左上：等級
+  /* ===== 左上：玩家頭像 + 等級 + 技能 ===== */
+  const px = 44, py = 30, pIcon = 100;
+
+  // 頭像框
+  roundRect(px, py, pIcon, pIcon, 16);
+  ctx.fillStyle = 'rgba(8,14,22,0.82)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(120,200,255,0.75)'; ctx.lineWidth = 2.5; ctx.stroke();
+  // 頭像內容（ν 鋼彈）
+  ctx.save();
+  roundRect(px+4, py+4, pIcon-8, pIcon-8, 12);
+  ctx.clip();
+  const pImg = IMG.nu;
+  if (pImg && pImg.complete && pImg.naturalWidth){
+    const ih = pIcon*1.55, iw = ih * pImg.naturalWidth / pImg.naturalHeight;
+    ctx.drawImage(pImg, px + pIcon/2 - iw/2 + 8, py + pIcon/2 - ih/2, iw, ih);
+  }
+  ctx.restore();
+
+  // 等級
   ctx.fillStyle = '#9fe8ff';
   ctx.font = '700 30px system-ui, sans-serif';
-  ctx.fillText(`LV ${playerLevel}`, 60, 78);
+  ctx.fillText(`LV ${playerLevel}`, px + 2, py + pIcon + 42);
   ctx.fillStyle = '#7f93a8';
-  ctx.font = '500 17px system-ui, sans-serif';
-  ctx.fillText(`擊破 ${exp}`, 60, 104);
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText(`擊破 ${exp}`, px + 132, py + pIcon + 40);
+
+  // 技能欄（3 格）
+  const skX = px, skW = 62, skGapY = 76;
+  let skY = py + pIcon + 66;
+  const charging = skillLock > 0;
+
+  const slots = [
+    { key:'barrier', name:'光束屏障', keyLabel:'SHIFT', lv:2, color:'#ff9fe8',
+      active: barrierMode === 'tri', ready: domeCd <= 0 && !charging && playerLevel >= 2,
+      cdRatio: playerLevel >= 2 ? Math.max(0, Math.min(1, Math.max(domeCd / CFG.domeCd, skillLock / CFG.skillRecharge))) : 1,
+      cdText: Math.ceil(skillLock > 0 ? skillLock : Math.max(0, domeCd)), glyph: glyphFins },
+    { key:'fins', name:'翼狀感應炮', keyLabel:'E', lv:3, color:'#dff3ff',
+      active: barrierMode === 'atk', ready: finsCd <= 0 && !charging && playerLevel >= 3,
+      cdRatio: playerLevel >= 3 ? Math.max(0, Math.min(1, Math.max(finsCd / CFG.finsCd, skillLock / CFG.skillRecharge))) : 1,
+      cdText: Math.ceil(skillLock > 0 ? skillLock : Math.max(0, finsCd)), glyph: glyphDrones },
+    { key:'weapon', name:WEAPONS[weaponIndex].name, keyLabel:String(weaponIndex+1), lv:1, color:'#fff0a0',
+      active:true, ready: playerLevel >= 1, cdRatio: 0, cdText: 0, glyph: weaponIndex === 1 ? glyphBazooka : glyphRifle }
+  ];
+
+  slots.forEach((sl, i) => {
+    const unlocked = playerLevel >= sl.lv;
+    const y = skY + i*skGapY;
+    drawIconSlot(skX, y, skW, {
+      color: unlocked ? sl.color : '#5b6b7a',
+      active: sl.active && unlocked,
+      ready: unlocked && sl.ready,
+      cdRatio: sl.cdRatio,
+      cdText: sl.cdText,
+      keyLabel: unlocked ? sl.keyLabel : `LV${sl.lv}`,
+      name: sl.name,
+      glyph: sl.glyph,
+      compact: true
+    });
+  });
+
+  /* ===== 右上：暫停提示已由 HTML 按鈕處理 ===== */
 
   // 右上：波次倒數
   if (state === STATE.WAVE){
     ctx.textAlign = 'right';
     ctx.fillStyle = '#9fb3c8';
-    ctx.font = '600 24px system-ui, sans-serif';
-    ctx.fillText(`雜魚波次　剩餘 ${Math.max(0, waveTimer).toFixed(1)} 秒`, W - 60, 78);
+    ctx.font = '600 22px system-ui, sans-serif';
+    ctx.fillText(`剩餘 ${Math.max(0, waveTimer).toFixed(1)} 秒`, W - 180, 70);
     ctx.textAlign = 'left';
   }
 
-  // 上方：技能圖示
-  const skSize = 74, skY = 108;
-  const skGap = 130;
-  const skStartX = W/2 - skGap/2 - skSize/2;
-
-  const barReady = domeCd <= 0 && skillLock <= 0 && playerLevel >= 2;
-  drawIconSlot(skStartX, skY, skSize, {
-    color: playerLevel >= 2 ? '#ff9fe8' : '#5b6b7a',
-    active: barrierMode === 'tri',
-    ready: barReady,
-    cdRatio: playerLevel >= 2 ? Math.max(0, Math.min(1, Math.max(domeCd / CFG.domeCd, skillLock / CFG.skillRecharge))) : 1,
-    cdText: Math.ceil(skillLock > 0 ? skillLock : Math.max(0, domeCd)),
-    keyLabel: playerLevel >= 2 ? 'SHIFT / 右鍵' : 'LV2 解鎖',
-    name: '光束屏障',
-    glyph: glyphFins
-  });
-
-  const atkReady = finsCd <= 0 && skillLock <= 0 && playerLevel >= 3;
-  drawIconSlot(skStartX + skGap, skY, skSize, {
-    color: playerLevel >= 3 ? '#dff3ff' : '#5b6b7a',
-    active: barrierMode === 'atk',
-    ready: atkReady,
-    cdRatio: playerLevel >= 3 ? Math.max(0, Math.min(1, Math.max(finsCd / CFG.finsCd, skillLock / CFG.skillRecharge))) : 1,
-    cdText: Math.ceil(skillLock > 0 ? skillLock : Math.max(0, finsCd)),
-    keyLabel: playerLevel >= 3 ? 'E' : 'LV3 解鎖',
-    name: '翼狀感應炮',
-    glyph: glyphDrones
-  });
-
-  // 下方：武器圖示
-  const wpSize = 66, wpY = H - 150;
-  const wpGap = 118;
-  const wpStartX = W/2 - wpGap/2 - wpSize/2;
-  if (state !== STATE.MASH) WEAPONS.forEach((w, i) => {
+  /* ===== 右下：Ammo（目前武器） ===== */
+  if (state !== STATE.MASH){
+    const ax = W - 118, ay = H - 118, ar = 56;
+    const w = WEAPONS[weaponIndex];
     const unlocked = playerLevel >= w.lv;
-    drawIconSlot(wpStartX + i*wpGap, wpY, wpSize, {
-      color: w.id === 'bazooka' ? '#ffb04a' : '#fff0a0',
-      active: weaponIndex === i && unlocked,
-      ready: unlocked,
-      cdRatio: 0,
-      keyLabel: unlocked ? String(i+1) : `LV${w.lv} 解鎖`,
-      name: w.name,
-      glyph: w.id === 'bazooka' ? glyphBazooka : glyphRifle
-    });
-  });
+    ctx.save();
+    ctx.beginPath(); ctx.arc(ax, ay, ar, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(8,14,22,0.82)'; ctx.fill();
+    ctx.strokeStyle = unlocked ? (w.id === 'bazooka' ? '#ffb04a' : '#fff0a0') : '#3f4b57';
+    ctx.lineWidth = 3; ctx.stroke();
+    ctx.globalAlpha = unlocked ? 1 : 0.35;
+    (w.id === 'bazooka' ? glyphBazooka : glyphRifle)(ax, ay - 6, ar*1.05, unlocked ? (w.id === 'bazooka' ? '#ffb04a' : '#fff0a0') : '#5b6b7a');
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'center';
+    ctx.fillStyle = unlocked ? '#cfe0f0' : '#5b6b7a';
+    ctx.font = '600 15px system-ui, sans-serif';
+    ctx.fillText(unlocked ? w.name : `LV${w.lv}`, ax, ay + 34);
+    ctx.fillStyle = '#7f93a8';
+    ctx.font = '700 13px system-ui, sans-serif';
+    ctx.fillText('AMMO', ax, ay - 30);
+    ctx.restore();
+    ctx.textAlign = 'left';
+  }
 
   // 升級提示
   if (levelFlash > 0 && !godMode){
