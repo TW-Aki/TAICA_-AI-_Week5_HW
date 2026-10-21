@@ -3068,7 +3068,7 @@ function drawHUD(){
   ctx.clip();
   const pImg = IMG.nu;
   if (pImg && pImg.complete && pImg.naturalWidth){
-    const ih = pIcon*1.5, iw = ih * pImg.naturalWidth / pImg.naturalHeight;
+    const ih = pIcon*1.45, iw = ih * pImg.naturalWidth / pImg.naturalHeight;
     ctx.drawImage(pImg, px + pIcon/2 - iw/2 + 8, py + pIcon/2 - ih/2, iw, ih);
   }
   ctx.restore();
