@@ -103,14 +103,30 @@ function sfx(kind){
   const o = actx.createOscillator(), g = actx.createGain();
   o.connect(g); g.connect(actx.destination);
   if (kind === 'shot'){
-    if (!muted && playClip(sndRifle, 0, 1.25)) return;
+    if (!muted && rifleBuf){
+      const rs = actx.createBufferSource(), rg = actx.createGain();
+      rg.gain.value = 1.0;
+      rs.buffer = rifleBuf;
+      rs.connect(rg); rg.connect(actx.destination);
+      rs.start(t, 0, Math.min(1.25, rifleBuf.duration));
+      return;
+    }
+    if (!muted && !rifleBuf && playClip(sndRifle, 0, 1.25)) return;
     o.type = 'square'; o.frequency.setValueAtTime(880, t);
     o.frequency.exponentialRampToValueAtTime(220, t + 0.08);
     g.gain.setValueAtTime(0.02, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
     o.start(t); o.stop(t + 0.1);
   } else if (kind === 'bazooka'){
-    if (!muted && playClip(sndBaz, 0, 1.4)) return;
+    if (!muted && bazBuf){
+      const src = actx.createBufferSource(), g2 = actx.createGain();
+      g2.gain.value = 1.0;
+      src.buffer = bazBuf;
+      src.connect(g2); g2.connect(actx.destination);
+      src.start(t, 0, Math.min(1.4, bazBuf.duration));
+      return;
+    }
+    if (!muted && !bazBuf && playClip(sndBaz, 0, 1.4)) return;
     // 尚未解碼完成時，用合成音暫代
     // 低頻推力 + 白噪爆風 + 扳機聲
     const now = t;
@@ -250,12 +266,16 @@ window.addEventListener('resize', placeTouchUI);
 window.addEventListener('orientationchange', () => setTimeout(placeTouchUI, 200));
 setTimeout(placeTouchUI, 100);
 
+let _uiCache = '';
 function refreshTouchUI(){
   if (!btnWeapon) return;
   const w = WEAPONS[weaponIndex];
+  const charging = (typeof skillLock !== 'undefined' && skillLock > 0);
+  const sig = playerLevel + '|' + weaponIndex + '|' + (charging ? 1 : 0);
+  if (sig === _uiCache) return;      // 狀態沒變就不碰 DOM
+  _uiCache = sig;
   btnWeapon.innerHTML = (playerLevel < 1 ? '步槍' : w.name.replace('光束','')) + '<span class="sub">切換武器</span>';
   btnWeapon.disabled = playerLevel < 1;
-  const charging = (typeof skillLock !== 'undefined' && skillLock > 0);
   btnSkill.disabled = playerLevel < 3 || charging;
   btnSkill.innerHTML = (playerLevel < 3 ? 'LV3' : (charging ? '充能' : '感應炮')) + '<span class="sub">技能</span>';
   btnBarrier.disabled = playerLevel < 2 || charging;
@@ -277,7 +297,7 @@ btnBarrier.addEventListener('pointerdown', e => {
   initAudio();
   keys['Shift_pressed'] = true;
 });
-setInterval(refreshTouchUI, 400);
+
 
 /* ============ 遊戲狀態 ============ */
 const STATE = {
@@ -1698,6 +1718,7 @@ function draw(){
   drawParticles();
   if (player && player.alive && [STATE.NAV,STATE.WAVE,STATE.BOSS1,STATE.BOSS2,STATE.BOSS3].includes(state)) drawPlayer();
   drawBarrierFront();
+  if (isTouch) refreshTouchUI();
   if (player && player.alive && [STATE.AXIS,STATE.MASH].includes(state)) drawPushing();
 
   drawHUD();
