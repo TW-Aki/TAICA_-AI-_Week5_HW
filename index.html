@@ -118,7 +118,7 @@ function initAudio(){
   if (actx){
     masterGain = actx.createGain();
     masterGain.gain.value = masterVol;
-    masterGain.connect(masterGain || actx.destination);
+    masterGain.connect(actx.destination);
   }
   // 預先解碼火箭炮音效
   const load = (src, set, vol) => fetch(src).then(r => r.arrayBuffer())
