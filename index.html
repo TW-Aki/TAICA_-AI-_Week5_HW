@@ -2654,7 +2654,7 @@ function drawBossBar(){
   ctx.fillText(`PHASE ${boss.phase} / 3`, W/2, by + 62);
 
   // BOSS 頭像（右上）
-  const ix = W - 168, iy = 58, isz = 136;
+  const ix = W - 176, iy = 62, isz = 140;
   roundRect(ix, iy, isz, isz, 16);
   ctx.fillStyle = 'rgba(24,8,14,0.82)'; ctx.fill();
   ctx.strokeStyle = 'rgba(255,120,140,0.75)'; ctx.lineWidth = 2.5; ctx.stroke();
@@ -3056,7 +3056,7 @@ function drawHUD(){
   ctx.textAlign = 'left';
 
   /* ===== 左上：玩家頭像 + 等級 + 技能 ===== */
-  const px = 40, py = 26, pIcon = 140;
+  const px = 40, py = 62, pIcon = 140;
 
   // 頭像框
   roundRect(px, py, pIcon, pIcon, 16);
