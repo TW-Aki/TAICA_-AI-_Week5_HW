@@ -393,7 +393,7 @@ const STATE = {
 
 const WEAPONS = [
   { id:'rifle',   name:'光束步槍', lv:0, cd:0.35, speed:1500, dmg:1, r:9,  color:'#fff0a0', mag:12, reload:6 },
-  { id:'bazooka', name:'火箭筒',   lv:1, cd:1.5,  speed:1090,  dmg:5, r:18, color:'#ffb04a', splash:130 }
+  { id:'bazooka', name:'火箭筒',   lv:1, cd:1.5,  speed:1090,  dmg:5, r:18, color:'#ffb04a', splash:130, mag:4, reload:10 }
 ];
 const LV2_EXP = 10, LV3_EXP = 26;
 ammo = WEAPONS.map(w => ({ n: w.mag, reloading: false, t: 0 }));
