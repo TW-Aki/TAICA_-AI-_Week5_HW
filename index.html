@@ -3529,7 +3529,8 @@ if (location.hash.includes('god')) { godMode = true; playerLevel = 3; }
 // 開發用：直接跳到指定階段檢查畫面
 if (location.hash.startsWith('#phase=')){
   resetGame();
-  const ph = location.hash.split('=')[1];
+  const ph = location.hash.split('=')[1].split('&')[0];
+  if (location.hash.includes('god')){ godMode = true; playerLevel = 3; }
   if (ph === 'boss1'){ state = STATE.BOSS1; spawnBoss1(); boss.entering=false; boss.x=1540; }
   if (ph === 'boss2'){ state = STATE.BOSS2; spawnBoss2(); boss.entering=false; boss.x=1540; }
   if (ph === 'boss1p2'){ state = STATE.BOSS1; spawnBoss1(); boss.entering=false; boss.x=1620; boss.phase=2; boss.hp=50; deployFunnels(6); }
